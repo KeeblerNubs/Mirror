@@ -1,26 +1,93 @@
+:root {
+    color-scheme: dark;
+    --bg: #0a0a0a;
+    --text: #ffffff;
+    --pink: #ff00ff;
+    --cyan: #00ffff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
 body {
-    background: #0a0a0a;
-    color: #fff;
-    font-family: system-ui, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: radial-gradient(circle at top, #171717 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+    padding: env(safe-area-inset-top) 1rem env(safe-area-inset-bottom);
+}
+
+.splash,
+.onboarding {
+    max-width: 32rem;
+    min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.25rem;
 }
 
 .logo {
-    font-size: 4rem;
-    background: linear-gradient(90deg, #ff00ff, #00ffff);
+    margin: 0;
+    font-size: clamp(3rem, 14vw, 4.5rem);
+    letter-spacing: 0.2rem;
+    background: linear-gradient(90deg, var(--pink), var(--cyan));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .tagline {
-    font-size: 1.5rem;
+    margin: 0;
+    font-size: clamp(1.15rem, 4vw, 1.6rem);
     font-style: italic;
+    line-height: 1.3;
+}
+
+.subtitle {
+    margin: 0;
+    opacity: 0.85;
 }
 
 button {
-    background: #ff00ff;
-    color: white;
     border: none;
-    padding: 16px 32px;
     border-radius: 9999px;
-    font-weight: bold;
+    padding: 0.85rem 1.25rem;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 120ms ease;
+    touch-action: manipulation;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.primary-btn {
+    background: var(--pink);
+    color: white;
+}
+
+.secondary-btn {
+    background: #1f1f1f;
+    color: white;
+    border: 1px solid #353535;
+}
+
+.quiz-card {
+    background: #111111;
+    border: 1px solid #2a2a2a;
+    border-radius: 1rem;
+    padding: 1.25rem;
+}
+
+.quiz-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
 }

@@ -2,21 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Onboarding - Mirror</title>
+    <meta name="theme-color" content="#0a0a0a">
     <link rel="stylesheet" href="css/mirror.css">
 </head>
 <body>
-    <div class="onboarding">
+    <main class="onboarding">
         <h2>Welcome to Mirror</h2>
         <p>This is about seeing the real you — and dressing like you fucking mean it.</p>
-        
-        <!-- Style Quiz Cards -->
-        <div class="quiz-card">
-            <h3>What's your vibe today?</h3>
-            <!-- Options here -->
-        </div>
-    </div>
+
+        <section class="quiz-card">
+            <h3>What’s your vibe today?</h3>
+            <div class="quiz-options" role="group" aria-label="Style vibe options">
+                <button class="secondary-btn" type="button">Minimal + Clean</button>
+                <button class="secondary-btn" type="button">Bold + Loud</button>
+                <button class="secondary-btn" type="button">Comfy + Casual</button>
+            </div>
+        </section>
+    </main>
     <script src="js/app.js"></script>
 </body>
 </html>
