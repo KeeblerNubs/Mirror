@@ -1,6 +1,6 @@
 # Mirror - Be Yourself. Look Fucking Cool.
 
-A confidence-first wardrobe app inspired by Clueless + real self-acceptance.
+A confidence-first wardrobe app serving queer sparkle, unapologetic self-love, and runway-level self-expression.
 
 ## Tech Stack
 - Cloudflare Pages + Workers
