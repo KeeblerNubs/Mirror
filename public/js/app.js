@@ -1,18 +1,22 @@
-function startOnboarding() {
-    window.location.href = '/onboarding.html';
-}
-
-async function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        try {
-            await navigator.serviceWorker.register('/sw.js');
-            console.log('✅ Service worker registered');
-        } catch (error) {
-            console.warn('Service worker registration failed:', error);
-        }
-    }
-}
-
-registerServiceWorker();
-
-console.log('🔥 Mirror is alive. Be yourself. Look fucking cool.');
+const STORAGE_KEY='mirror-profile';
+function getProfile(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||null}catch{return null}}
+function saveProfile(p){localStorage.setItem(STORAGE_KEY,JSON.stringify(p))}
+function clearProfile(){localStorage.removeItem(STORAGE_KEY)}
+const onboardingSteps=[
+{title:"What's your vibe?",subtitle:"Pick the energy you bring today.",type:'single',key:'vibe',options:[{label:'Minimal + Clean',value:'minimal',emoji:'🤍'},{label:'Bold + Loud',value:'bold',emoji:'🔥'},{label:'Comfy + Casual',value:'comfy',emoji:'🛋️'},{label:'Dark + Mysterious',value:'dark',emoji:'🖤'}]},
+{title:"What's your gender expression?",subtitle:"Your look, your rules.",type:'single',key:'expression',options:[{label:'Masculine',value:'masc',emoji:'👔'},{label:'Feminine',value:'femme',emoji:'👗'},{label:'Androgynous',value:'andro',emoji:'✨'},{label:'Fluid / No Labels',value:'fluid',emoji:'🌈'}]},
+{title:'How adventurous is your style?',subtitle:'Rate your fashion risk tolerance.',type:'single',key:'adventure',options:[{label:'Safe & Classic',value:'safe',emoji:'🤵'},{label:'A Little Playful',value:'playful',emoji:'🎨'},{label:'Bold Statement',value:'bold',emoji:'💥'},{label:'Full Chaos Mode',value:'chaos',emoji:'🌀'}]},
+{title:'Your name (or whatever you go by)',subtitle:"This is how we'll address you.",type:'text',key:'name',placeholder:'Enter your name...'}
+];
+let currentStep=0,onboardingData={};
+function renderOnboardingStep(){const c=document.getElementById('step-container'),p=document.getElementById('progress-bar'),s=onboardingSteps[currentStep];if(!c||!s)return;if(p){const pct=((currentStep+1)/onboardingSteps.length)*100;p.style.width=pct+'%'}let h='<h2>'+s.title+'</h2><p class="subtitle">'+s.subtitle+'</p>';if(s.type==='single'){h+='<div class="quiz-options">';s.options.forEach(o=>{const sel=onboardingData[s.key]===o.value;h+='<button class="'+(sel?'primary-btn':'secondary-btn')+'" type="button" onclick="selectOption(\''+s.key+'\',\''+o.value+'\')">'+o.emoji+' '+o.label+'</button>'});h+='</div>'}else if(s.type==='text'){const v=onboardingData[s.key]||'';h+='<input type="text" id="text-input" class="text-input" placeholder="'+(s.placeholder||'')+'" value="'+v+'" oninput="updateText(\''+s.key+'\',this.value)" autocomplete="off"/>'}h+='<div class="nav-buttons">';if(currentStep>0)h+='<button class="secondary-btn" type="button" onclick="prevStep()">← Back</button>';if(currentStep<onboardingSteps.length-1)h+='<button class="primary-btn" type="button" onclick="nextStep()" id="next-btn">Next →</button>';else h+="<button class=\"primary-btn\" type=\"button\" onclick=\"finishOnboarding()\">✨ Let's Go!</button>";h+='</div>';c.innerHTML=h;if(s.type==='text')setTimeout(()=>{const i=document.getElementById('text-input');if(i)i.focus()},100)}
+function selectOption(k,v){onboardingData[k]=v;renderOnboardingStep()}
+function updateText(k,v){onboardingData[k]=v}
+function nextStep(){const s=onboardingSteps[currentStep];if((s.type==='single'&&!onboardingData[s.key])||(s.type==='text'&&(!onboardingData[s.key]||!onboardingData[s.key].trim()))){const btn=document.getElementById('next-btn');if(btn){btn.style.animation='shake 0.3s ease';btn.textContent='Pick something first!';setTimeout(()=>{btn.style.animation='';btn.textContent='Next →'},1200)};return}if(currentStep<onboardingSteps.length-1){currentStep++;renderOnboardingStep()}}
+function prevStep(){if(currentStep>0){currentStep--;renderOnboardingStep()}}
+function finishOnboarding(){for(let i=0;i<onboardingSteps.length;i++){const s=onboardingSteps[i];if((s.type==='single'&&!onboardingData[s.key])||(s.type==='text'&&(!onboardingData[s.key]||!onboardingData[s.key].trim()))){currentStep=i;renderOnboardingStep();return}}onboardingData.completedAt=new Date().toISOString();saveProfile(onboardingData);window.location.href='/board.html'}
+function startOnboarding(){getProfile()?window.location.href='/board.html':window.location.href='/onboarding.html'}
+function renderBoard(){const p=getProfile();if(!p){window.location.href='/onboarding.html';return}const c=document.getElementById('board-content');if(!c)return;const e={minimal:'🤍',bold:'🔥',comfy:'🛋️',dark:'🖤'},ex={masc:'👔',femme:'👗',andro:'✨',fluid:'🌈'},a={safe:'🤵',playful:'🎨',bold:'💥',chaos:'🌀'};const f=(steps,key,val)=>{const s=steps.find(st=>st.key===key);if(!s||!s.options)return val;const o=s.options.find(opt=>opt.value===val);return o?o.label:val};c.innerHTML='<div class="board-header"><h1 class="logo" style="font-size:clamp(2rem,8vw,3rem);">MIRROR</h1><p class="tagline" style="font-size:1rem;">Hey there, '+(p.name||'gorgeous')+' ✨</p></div><div class="profile-card"><div class="profile-row"><span>Vibe</span><span>'+(e[p.vibe]||'✨')+' '+f(onboardingSteps,'vibe',p.vibe)+'</span></div><div class="profile-row"><span>Expression</span><span>'+(ex[p.expression]||'✨')+' '+f(onboardingSteps,'expression',p.expression)+'</span></div><div class="profile-row"><span>Adventure</span><span>'+(a[p.adventure]||'✨')+' '+f(onboardingSteps,'adventure',p.adventure)+'</span></div></div><div class="board-actions"><h3>Your Outfit Board</h3><p style="opacity:0.7;">This is where your looks will live.</p><button class="primary-btn" onclick=\"alert('Outfit builder coming soon!')\">✨ Build an Outfit</button><button class="secondary-btn" onclick="resetProfile()" style="margin-top:0.5rem;">🔄 Start Over</button></div>'}
+function resetProfile(){if(confirm('Reset your profile and start over?')){clearProfile();window.location.href='/'}}
+async function registerServiceWorker(){if('serviceWorker'in navigator){try{await navigator.serviceWorker.register('/sw.js')}catch(e){console.warn(e)}}}
+document.addEventListener('DOMContentLoaded',()=>{registerServiceWorker();const p=window.location.pathname;if(p.endsWith('onboarding.html')){if(getProfile()){window.location.href='/board.html';return}onboardingData={};currentStep=0;renderOnboardingStep()}else if(p.endsWith('board.html')){renderBoard()}console.log('🔥 Mirror is alive.')});
