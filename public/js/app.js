@@ -84,7 +84,34 @@ const ICONS = {
     scan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>',
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
     community: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',
+    fire: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c-4.97 0-9-2.69-9-6 0-2.5 1.5-4.5 3-6 .5 1 1.5 2 3 2 0-3 2-6 6-9 0 3 3 5 3 8 1.5-1.5 3-1 3-1 0 3.5-4.03 12-9 12z"/></svg>',
+    wash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6l3 1 3-1 3 1 3-1 3 1 3-1"/><path d="M3 10l3 1 3-1 3 1 3-1 3 1 3-1"/><path d="M3 14l3 1 3-1 3 1 3-1 3 1 3-1"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>',
+    suitcase: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="11" x2="12" y2="17"/></svg>',
+    mannequin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="4" r="2"/><path d="M12 6v4"/><path d="M8 10l4 2 4-2"/><path d="M12 12v5"/><path d="M9 22l3-5 3 5"/></svg>',
+    vote: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-6 0v4"/><rect x="2" y="9" width="20" height="12" rx="2"/><path d="M12 15v2"/></svg>',
+    cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>',
 };
+
+const CHALLENGES_KEY = 'mirror-challenges';
+const LAUNDRY_KEY = 'mirror-laundry';
+const VOTING_KEY = 'mirror-votes';
+
+const DAILY_CHALLENGES = [
+    { id: 'monochrome', title: 'Monochrome Monday', desc: 'Wear an outfit using only one color family', icon: '🎨' },
+    { id: 'textures', title: 'Texture Mix', desc: 'Combine at least 3 different textures/fabrics', icon: '🧶' },
+    { id: 'no_black', title: 'No Black Challenge', desc: 'Build a look without any black pieces', icon: '🌈' },
+    { id: 'accessory', title: 'Accessory Focus', desc: 'Let an accessory be the statement piece', icon: '💎' },
+    { id: 'comfort', title: 'Comfort Zone Exit', desc: 'Wear something you normally wouldn\'t', icon: '🚀' },
+    { id: 'vintage', title: 'Throwback Thursday', desc: 'Style an outfit inspired by a past decade', icon: '🕰️' },
+    { id: 'layers', title: 'Layer Up', desc: 'Create a look with at least 3 layers', icon: '🧥' },
+    { id: 'color_pop', title: 'Color Pop', desc: 'Neutral outfit with one bold color accent', icon: '💥' },
+    { id: 'minimal', title: 'Minimalist', desc: '3 pieces max — make it count', icon: '✨' },
+    { id: 'pattern', title: 'Pattern Play', desc: 'Mix two different patterns that work together', icon: '🔲' },
+    { id: 'dress_up', title: 'Overdressed Friday', desc: 'Dress one level above what the day requires', icon: '👑' },
+    { id: 'sport_lux', title: 'Sport Luxe', desc: 'Mix athletic and dressy pieces', icon: '🏆' },
+    { id: 'decade', title: 'Decade Dressing', desc: 'Channel the 90s, 70s, or 2000s', icon: '📻' },
+    { id: 'one_brand', title: 'Brand Loyalty', desc: 'Build a full look from one brand if possible', icon: '🏷️' },
+];
 
 const SEASONS = ['Spring', 'Summer', 'Fall', 'Winter'];
 const SEASON_ITEMS = {
@@ -640,6 +667,10 @@ async function renderBoard() {
             '<button class="secondary-btn" onclick="window.location.href=\'/calendar.html\'">📅 Outfit Calendar</button>' +
             '<button class="secondary-btn" onclick="window.location.href=\'/ootd.html\'">☀️ Outfit of the Day</button>' +
             '<button class="secondary-btn" onclick="window.location.href=\'/community.html\'">👥 Community</button>' +
+            '<button class="secondary-btn" onclick="window.location.href=\'/challenges.html\'">🔥 Style Challenges</button>' +
+            '<button class="secondary-btn" onclick="generateStyleReport()">📊 Style Report</button>' +
+            '<button class="secondary-btn" onclick="window.location.href=\'/packing.html\'">🧳 Smart Packing</button>' +
+            '<button class="secondary-btn" onclick="showWishlist()">🛒 Wishlist</button>' +
             '<button class="secondary-btn" onclick="resetProfile()" style="color:var(--negative);">🔄 Start Over</button>' +
         '</div>';
 
@@ -687,10 +718,14 @@ async function renderWardrobe() {
     });
     html += '</div>';
 
-    // action row
+    // action rows
     html += '<div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">' +
         '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="openBatchScanModal()">' + ICONS.scan + ' Batch Scan</button>' +
         '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="showSeasonalAdvice()">' + ICONS.sun + ' Seasonal Tips</button>' +
+        '</div>' +
+        '<div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">' +
+        '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="showLaundryStatus()">' + ICONS.wash + ' Laundry</button>' +
+        '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="window.location.href=\'/packing.html\'">' + ICONS.suitcase + ' Pack a Trip</button>' +
         '</div>';
 
     // grid
@@ -892,7 +927,12 @@ async function openItemDetail(id) {
                     '<button class="toggle' + (isAvailable ? ' on' : '') + '" id="avail-toggle" onclick="toggleItemAvailability(\'' + item.id + '\')"></button>' +
                 '</div>' +
             '</div>' +
+            '<div class="toggle-row">' +
+                '<span class="meta-label">Clean / Ready</span>' +
+                '<button class="toggle' + (item.laundry !== true ? ' on' : '') + '" id="laundry-toggle" onclick="toggleItemLaundry(\'' + item.id + '\')"></button>' +
+            '</div>' +
             '<button class="primary-btn" onclick="closeModal();startRemix(\'' + item.id + '\')">🔀 Remix — 5 Ways to Wear This</button>' +
+            '<button class="secondary-btn" onclick="closeModal();openVirtualTryOn(\'' + item.id + '\')">' + ICONS.mannequin + ' Virtual Try-On</button>' +
             '<button class="secondary-btn" style="color:var(--negative);" onclick="deleteWardrobeItem(\'' + item.id + '\');closeModal()">Delete Item</button>' +
             '<button class="secondary-btn" onclick="closeModal()">Close</button>' +
         '</div>';
@@ -910,6 +950,15 @@ async function toggleItemAvailability(id) {
     if (toggle) {
         toggle.classList.toggle('on', item.available);
     }
+}
+
+async function toggleItemLaundry(id) {
+    const item = await dbGetItem(id);
+    if (!item) return;
+    item.laundry = item.laundry !== true ? true : false;
+    await dbUpdateItem(item);
+    const toggle = document.getElementById('laundry-toggle');
+    if (toggle) toggle.classList.toggle('on', !item.laundry);
 }
 
 // ── Generate Outfit Page ──────────────────────────────────────────
@@ -949,6 +998,10 @@ async function renderGenerate() {
     html += '<div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">' +
         '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="window.location.href=\'/ootd.html\'">☀️ Today\'s Pick</button>' +
         '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="window.location.href=\'/community.html\'">' + ICONS.community + ' Community</button>' +
+        '</div>' +
+        '<div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">' +
+        '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="window.location.href=\'/challenges.html\'">' + ICONS.fire + ' Challenges</button>' +
+        '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="openOutfitVoting()">' + ICONS.vote + ' Vote</button>' +
         '</div>';
 
     if (availableItems.length < 3) {
@@ -2576,6 +2629,785 @@ async function openFeedDetail(outfitId) {
     document.body.appendChild(overlay);
 }
 
+// ── Style Challenges & Streaks ────────────────────────────────────
+function getChallengeData() {
+    try { return JSON.parse(localStorage.getItem(CHALLENGES_KEY) || '{}'); } catch { return {}; }
+}
+
+function saveChallengeData(data) {
+    localStorage.setItem(CHALLENGES_KEY, JSON.stringify(data));
+}
+
+function getTodayStr() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function getDailyChallenge() {
+    const today = getTodayStr();
+    const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+    return DAILY_CHALLENGES[dayOfYear % DAILY_CHALLENGES.length];
+}
+
+function calculateStreak(data) {
+    const completed = data.completed || {};
+    const dates = Object.keys(completed).sort().reverse();
+    if (dates.length === 0) return 0;
+    let streak = 0;
+    const today = new Date();
+    for (let i = 0; i < 365; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const ds = d.toISOString().slice(0, 10);
+        if (completed[ds]) {
+            streak++;
+        } else if (i > 0) {
+            break;
+        }
+    }
+    return streak;
+}
+
+async function renderChallenges() {
+    const c = document.getElementById('page-content');
+    if (!c) return;
+
+    const data = getChallengeData();
+    const today = getTodayStr();
+    const todayChallenge = getDailyChallenge();
+    const streak = calculateStreak(data);
+    const isCompleted = data.completed && data.completed[today];
+    const totalCompleted = Object.keys(data.completed || {}).length;
+
+    let html =
+        '<div class="page-header">' +
+            '<h1>Style Challenges</h1>' +
+            '<p>Push your style boundaries every day</p>' +
+        '</div>';
+
+    // Streak card
+    html += '<div class="card challenge-streak-card">' +
+        '<div class="streak-display">' +
+            '<span class="streak-fire">🔥</span>' +
+            '<span class="streak-number">' + streak + '</span>' +
+        '</div>' +
+        '<div class="streak-label">' + (streak === 1 ? '1 Day Streak' : streak + ' Day Streak') + '</div>' +
+        '<div class="streak-sub">' + totalCompleted + ' challenges completed all time</div>' +
+        '</div>';
+
+    // Today's challenge
+    html += '<div class="card challenge-today">' +
+        '<div class="challenge-icon">' + todayChallenge.icon + '</div>' +
+        '<h3>Today\'s Challenge</h3>' +
+        '<h2 class="challenge-title">' + todayChallenge.title + '</h2>' +
+        '<p class="challenge-desc">' + todayChallenge.desc + '</p>';
+
+    if (isCompleted) {
+        html += '<div class="challenge-done-badge">Completed today!</div>';
+    } else {
+        html += '<button class="primary-btn" onclick="completeChallenge()">I Did It!</button>';
+    }
+    html += '</div>';
+
+    // Recent history
+    const completed = data.completed || {};
+    const recentDates = Object.keys(completed).sort().reverse().slice(0, 7);
+    if (recentDates.length > 0) {
+        html += '<div class="card">' +
+            '<h3 style="margin:0 0 0.75rem;">Recent Challenges</h3>';
+        recentDates.forEach(date => {
+            const ch = DAILY_CHALLENGES.find(x => x.id === completed[date]) || { icon: '?', title: 'Challenge' };
+            html += '<div class="challenge-history-row">' +
+                '<span>' + ch.icon + ' ' + ch.title + '</span>' +
+                '<span style="opacity:0.5;">' + new Date(date + 'T12:00:00').toLocaleDateString() + '</span>' +
+                '</div>';
+        });
+        html += '</div>';
+    }
+
+    // All challenges preview
+    html += '<div class="card">' +
+        '<h3 style="margin:0 0 0.75rem;">All Challenges</h3>';
+    DAILY_CHALLENGES.forEach(ch => {
+        const done = Object.values(completed).includes(ch.id);
+        html += '<div class="challenge-list-row' + (done ? ' done' : '') + '">' +
+            '<span>' + ch.icon + ' ' + ch.title + '</span>' +
+            (done ? '<span style="color:var(--accent);">Done</span>' : '') +
+            '</div>';
+    });
+    html += '</div>';
+
+    c.innerHTML = html;
+    renderNav('generate');
+}
+
+function completeChallenge() {
+    const data = getChallengeData();
+    if (!data.completed) data.completed = {};
+    const today = getTodayStr();
+    const todayChallenge = getDailyChallenge();
+    data.completed[today] = todayChallenge.id;
+    saveChallengeData(data);
+    renderChallenges();
+}
+
+// ── AI Style Report ───────────────────────────────────────────────
+async function generateStyleReport() {
+    const items = await dbGetAllItems();
+    const outfits = await dbGetAllOutfits();
+    const profile = getProfile();
+
+    if (items.length === 0) {
+        alert('Add some items to your wardrobe first to generate a style report.');
+        return;
+    }
+
+    const counts = {};
+    items.forEach(i => { counts[i.category] = (counts[i.category] || 0) + 1; });
+
+    const occasions = {};
+    const moods = {};
+    outfits.forEach(o => {
+        if (o.occasion) occasions[o.occasion] = (occasions[o.occasion] || 0) + 1;
+        if (o.mood) moods[o.mood] = (moods[o.mood] || 0) + 1;
+    });
+
+    const topItemCounts = {};
+    outfits.forEach(o => {
+        (o.itemIds || []).forEach(id => { topItemCounts[id] = (topItemCounts[id] || 0) + 1; });
+    });
+    const topItems = Object.entries(topItemCounts).sort((a, b) => b[1] - a[1]).slice(0, 5)
+        .map(([id, count]) => {
+            const item = items.find(i => i.id === id);
+            return { name: item ? (item.name || item.category) : id, count };
+        });
+
+    const pricedItems = items.filter(i => i.price && i.price > 0);
+    const totalSpent = pricedItems.reduce((sum, i) => sum + i.price, 0);
+
+    const stats = {
+        totalItems: items.length,
+        totalOutfits: outfits.length,
+        likedOutfits: outfits.filter(o => o.liked).length,
+        categoryBreakdown: counts,
+        topItems,
+        occasions,
+        moods,
+        totalSpent: totalSpent.toFixed(2),
+        avgCostPerWear: pricedItems.length > 0 ? (totalSpent / pricedItems.length).toFixed(2) : '0',
+    };
+
+    // Show loading modal
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'add-item-modal';
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+    overlay.innerHTML = '<div class="modal-sheet" onclick="event.stopPropagation()">' +
+        '<h2>📊 Style Report</h2>' +
+        '<div class="ootd-loading"><div class="spinner"></div><p>Analyzing your style...</p></div>' +
+        '</div>';
+    document.body.appendChild(overlay);
+
+    try {
+        const res = await fetch('/api/style-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stats, profile }),
+        });
+
+        if (!res.ok) throw new Error('API error');
+        const report = await res.json();
+
+        const sheet = overlay.querySelector('.modal-sheet');
+        sheet.innerHTML =
+            '<h2>📊 ' + (report.title || 'Your Style Report') + '</h2>' +
+            '<div class="style-report">' +
+                '<div class="report-score">' +
+                    '<div class="score-circle">' + (report.styleScore || 75) + '</div>' +
+                    '<div class="score-label">Style Score</div>' +
+                '</div>' +
+                '<div class="report-section">' +
+                    '<h4>Style Personality</h4>' +
+                    '<p>' + (report.stylePersonality || '') + '</p>' +
+                '</div>' +
+                '<div class="report-section">' +
+                    '<h4>Key Insight</h4>' +
+                    '<p>' + (report.topInsight || '') + '</p>' +
+                '</div>' +
+                '<div class="report-section">' +
+                    '<h4>Color Story</h4>' +
+                    '<p>' + (report.colorStory || '') + '</p>' +
+                '</div>' +
+                (report.suggestions ? '<div class="report-section"><h4>Suggestions</h4><ul>' +
+                    report.suggestions.map(s => '<li>' + s + '</li>').join('') + '</ul></div>' : '') +
+                (report.challenge ? '<div class="report-section challenge-card">' +
+                    '<h4>Next Month\'s Challenge</h4><p>' + report.challenge + '</p></div>' : '') +
+            '</div>' +
+            '<button class="secondary-btn" onclick="closeModal()">Close</button>';
+    } catch (err) {
+        const sheet = overlay.querySelector('.modal-sheet');
+        sheet.innerHTML =
+            '<h2>📊 Style Report</h2>' +
+            '<p style="text-align:center;">Could not generate report. Make sure OPENAI_API_KEY is configured.</p>' +
+            '<button class="secondary-btn" onclick="closeModal()">Close</button>';
+    }
+}
+
+// ── Laundry Tracker ───────────────────────────────────────────────
+async function showLaundryStatus() {
+    const items = await dbGetAllItems();
+    const dirtyItems = items.filter(i => i.laundry === true);
+    const cleanItems = items.filter(i => i.laundry !== true && i.available !== false);
+    const totalReady = cleanItems.length;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'add-item-modal';
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+
+    let html = '<div class="modal-sheet" onclick="event.stopPropagation()">' +
+        '<h2>' + ICONS.wash + ' Laundry Tracker</h2>';
+
+    // Summary
+    html += '<div class="wardrobe-stats" style="margin-bottom:1rem;">' +
+        '<div class="stat-card"><div class="stat-num">' + cleanItems.length + '</div><div class="stat-label">Clean</div></div>' +
+        '<div class="stat-card"><div class="stat-num">' + dirtyItems.length + '</div><div class="stat-label">In Laundry</div></div>' +
+        '</div>';
+
+    // Warning if running low
+    if (totalReady < 5 && items.length > 5) {
+        html += '<div class="notice" style="margin-bottom:1rem;">⚠️ Running low on clean clothes! Only ' + totalReady + ' items ready to wear.</div>';
+    }
+
+    // Dirty items by category
+    if (dirtyItems.length > 0) {
+        html += '<h3 style="margin:0 0 0.5rem;">In the Laundry</h3>';
+        dirtyItems.forEach(item => {
+            const catLabel = CATEGORIES.find(ct => ct.id === item.category)?.label || item.category;
+            html += '<div class="scan-item-row">' +
+                '<div class="scan-item-info">' +
+                    '<span class="scan-item-name">' + (item.name || catLabel) + '</span>' +
+                    '<span class="scan-item-cat">' + catLabel + '</span>' +
+                '</div>' +
+                '<button class="pill active" onclick="markClean(\'' + item.id + '\')">Mark Clean</button>' +
+                '</div>';
+        });
+        html += '<button class="primary-btn" style="margin-top:0.75rem;" onclick="markAllClean()">Mark All Clean</button>';
+    } else {
+        html += '<p style="text-align:center;opacity:0.6;">All items are clean! Open an item and toggle "Clean / Ready" to track laundry.</p>';
+    }
+
+    html += '<button class="secondary-btn" style="margin-top:0.75rem;" onclick="closeModal()">Close</button></div>';
+
+    overlay.innerHTML = html;
+    document.body.appendChild(overlay);
+}
+
+async function markClean(id) {
+    const item = await dbGetItem(id);
+    if (!item) return;
+    item.laundry = false;
+    await dbUpdateItem(item);
+    closeModal();
+    showLaundryStatus();
+}
+
+async function markAllClean() {
+    const items = await dbGetAllItems();
+    for (const item of items) {
+        if (item.laundry === true) {
+            item.laundry = false;
+            await dbUpdateItem(item);
+        }
+    }
+    closeModal();
+    showLaundryStatus();
+}
+
+// ── Outfit Voting ─────────────────────────────────────────────────
+async function openOutfitVoting() {
+    const outfits = await dbGetAllOutfits();
+    if (outfits.length < 2) {
+        alert('Save at least 2 outfits first to create a vote!');
+        return;
+    }
+
+    const items = await dbGetAllItems();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'add-item-modal';
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+
+    // Pick 2 random outfits
+    const shuffled = [...outfits].sort(() => Math.random() - 0.5);
+    const optionA = shuffled[0];
+    const optionB = shuffled[1];
+
+    let html = '<div class="modal-sheet" onclick="event.stopPropagation()">' +
+        '<h2>' + ICONS.vote + ' Which Look?</h2>' +
+        '<p style="text-align:center;opacity:0.7;">Tap the outfit you\'d wear today</p>' +
+        '<div class="vote-container">';
+
+    [optionA, optionB].forEach((outfit, idx) => {
+        const label = idx === 0 ? 'A' : 'B';
+        html += '<div class="vote-option" onclick="castVote(\'' + outfit.id + '\')">' +
+            '<div class="vote-label">' + label + '</div>' +
+            '<h4>' + (outfit.name || 'Look ' + label) + '</h4>';
+        if (outfit.itemIds && outfit.itemIds.length > 0) {
+            html += '<div class="vote-items">';
+            outfit.itemIds.slice(0, 4).forEach(id => {
+                const item = items.find(i => i.id === id);
+                if (item && item.imageBlob) {
+                    html += '<img src="' + blobToObjectURL(item.imageBlob) + '" alt="' + (item.name || '') + '">';
+                }
+            });
+            html += '</div>';
+        }
+        if (outfit.reasoning) html += '<p class="vote-reasoning">' + outfit.reasoning.substring(0, 80) + '...</p>';
+        html += '</div>';
+    });
+
+    html += '</div>' +
+        '<button class="secondary-btn" onclick="openOutfitVoting()">🔀 Different Matchup</button>' +
+        '<button class="secondary-btn" onclick="closeModal()">Close</button>' +
+        '</div>';
+
+    overlay.innerHTML = html;
+    document.body.appendChild(overlay);
+}
+
+function castVote(outfitId) {
+    let votes;
+    try { votes = JSON.parse(localStorage.getItem(VOTING_KEY) || '{}'); } catch { votes = {}; }
+    votes[outfitId] = (votes[outfitId] || 0) + 1;
+    localStorage.setItem(VOTING_KEY, JSON.stringify(votes));
+
+    const totalVotes = votes[outfitId];
+    closeModal();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'add-item-modal';
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+    overlay.innerHTML = '<div class="modal-sheet" onclick="event.stopPropagation()">' +
+        '<div style="text-align:center;padding:2rem 0;">' +
+            '<div style="font-size:3rem;">👍</div>' +
+            '<h3>Vote Recorded!</h3>' +
+            '<p style="opacity:0.7;">This outfit has ' + totalVotes + ' vote' + (totalVotes !== 1 ? 's' : '') + ' total</p>' +
+        '</div>' +
+        '<button class="primary-btn" onclick="openOutfitVoting()">Vote Again</button>' +
+        '<button class="secondary-btn" onclick="closeModal()">Done</button>' +
+        '</div>';
+    document.body.appendChild(overlay);
+}
+
+// ── Virtual Try-On (Silhouette Composite) ─────────────────────────
+async function openVirtualTryOn(itemId) {
+    const items = await dbGetAllItems();
+    const targetItem = items.find(i => i.id === itemId);
+    if (!targetItem) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'add-item-modal';
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+
+    let html = '<div class="modal-sheet" onclick="event.stopPropagation()">' +
+        '<h2>' + ICONS.mannequin + ' Virtual Try-On</h2>';
+
+    // Silhouette layout positions based on category
+    const slotOrder = ['hats', 'tops', 'outerwear', 'bottoms', 'shoes', 'accessories', 'bags', 'jewelry'];
+    const slotLabels = {
+        hats: 'Head', tops: 'Top', outerwear: 'Layer', bottoms: 'Bottom',
+        shoes: 'Feet', accessories: 'Accessory', bags: 'Bag', jewelry: 'Jewelry'
+    };
+
+    // Pre-fill the target item's slot
+    const selectedItems = {};
+    selectedItems[targetItem.category] = targetItem;
+
+    html += '<div class="tryon-canvas" id="tryon-canvas">';
+
+    slotOrder.forEach(slot => {
+        const selected = selectedItems[slot];
+        const catItems = items.filter(i => i.category === slot && i.available !== false && i.laundry !== true);
+        html += '<div class="tryon-slot" data-slot="' + slot + '">';
+        if (selected) {
+            html += '<img src="' + blobToObjectURL(selected.imageBlob) + '" alt="' + (selected.name || slot) + '" class="tryon-item-img">';
+            html += '<div class="tryon-slot-label">' + (selected.name || slotLabels[slot]) + '</div>';
+        } else {
+            html += '<div class="tryon-empty" onclick="pickTryOnItem(\'' + slot + '\')">' +
+                '<span class="tryon-plus">+</span>' +
+                '<span>' + slotLabels[slot] + '</span>' +
+                '</div>';
+        }
+        html += '</div>';
+    });
+
+    html += '</div>';
+
+    // Add item picker area
+    html += '<div id="tryon-picker" class="hidden"></div>';
+    html += '<button class="primary-btn" onclick="exportTryOnImage()">📸 Save Look</button>';
+    html += '<button class="secondary-btn" onclick="closeModal()">Close</button></div>';
+
+    overlay.innerHTML = html;
+    document.body.appendChild(overlay);
+
+    // Store items for picker
+    window._tryOnItems = items;
+    window._tryOnSelected = selectedItems;
+}
+
+async function pickTryOnItem(slot) {
+    const items = (window._tryOnItems || []).filter(i => i.category === slot && i.available !== false && i.laundry !== true);
+    const picker = document.getElementById('tryon-picker');
+    if (!picker || items.length === 0) {
+        alert('No available ' + slot + ' in your wardrobe.');
+        return;
+    }
+
+    picker.classList.remove('hidden');
+    let html = '<h4>Pick a ' + slot + ':</h4><div class="tryon-picker-grid">';
+    items.forEach(item => {
+        html += '<div class="tryon-picker-item" onclick="selectTryOnItem(\'' + slot + '\',\'' + item.id + '\')">' +
+            '<img src="' + blobToObjectURL(item.imageBlob) + '" alt="' + (item.name || slot) + '">' +
+            '</div>';
+    });
+    html += '</div>';
+    picker.innerHTML = html;
+}
+
+function selectTryOnItem(slot, itemId) {
+    const item = (window._tryOnItems || []).find(i => i.id === itemId);
+    if (!item) return;
+
+    window._tryOnSelected[slot] = item;
+    const slotEl = document.querySelector('.tryon-slot[data-slot="' + slot + '"]');
+    if (slotEl) {
+        slotEl.innerHTML = '<img src="' + blobToObjectURL(item.imageBlob) + '" alt="' + (item.name || slot) + '" class="tryon-item-img">' +
+            '<div class="tryon-slot-label">' + (item.name || slot) + '</div>';
+    }
+    document.getElementById('tryon-picker')?.classList.add('hidden');
+}
+
+async function exportTryOnImage() {
+    const selected = window._tryOnSelected || {};
+    const filledSlots = Object.values(selected).filter(Boolean);
+    if (filledSlots.length === 0) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 600;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, 400, 600);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('Mirror — Virtual Try-On', 200, 30);
+
+    const slotPositions = {
+        hats: { x: 150, y: 40, w: 100, h: 80 },
+        tops: { x: 125, y: 130, w: 150, h: 120 },
+        outerwear: { x: 50, y: 130, w: 80, h: 120 },
+        bottoms: { x: 125, y: 260, w: 150, h: 140 },
+        shoes: { x: 125, y: 410, w: 150, h: 80 },
+        accessories: { x: 300, y: 200, w: 80, h: 80 },
+        bags: { x: 300, y: 300, w: 80, h: 80 },
+        jewelry: { x: 300, y: 130, w: 60, h: 60 },
+    };
+
+    for (const [slot, item] of Object.entries(selected)) {
+        if (!item || !item.imageBlob) continue;
+        const pos = slotPositions[slot];
+        if (!pos) continue;
+        try {
+            const url = blobToObjectURL(item.imageBlob);
+            const img = new Image();
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = url;
+            });
+            ctx.drawImage(img, pos.x, pos.y, pos.w, pos.h);
+        } catch (e) { /* skip items that can't load */ }
+    }
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '12px system-ui';
+    ctx.fillText('Be yourself. Look fucking cool.', 200, 580);
+
+    canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const file = new File([blob], 'mirror-tryon.png', { type: 'image/png' });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            try { await navigator.share({ files: [file], title: 'Mirror Try-On' }); } catch (e) { /* cancelled */ }
+        } else {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'mirror-tryon.png';
+            a.click();
+        }
+    }, 'image/png');
+}
+
+// ── Smart Packing ─────────────────────────────────────────────────
+let packingState = { destination: '', duration: 3, activities: '', results: null, loading: false };
+
+async function renderPacking() {
+    const p = getProfile();
+    if (!p) { window.location.href = '/onboarding.html'; return; }
+
+    const c = document.getElementById('page-content');
+    if (!c) return;
+
+    const items = await dbGetAllItems();
+    const availableItems = items.filter(i => i.available !== false && i.laundry !== true);
+
+    let html =
+        '<div class="page-header">' +
+            '<h1>' + ICONS.suitcase + ' Smart Packing</h1>' +
+            '<p>AI builds the perfect capsule travel wardrobe from your closet</p>' +
+        '</div>';
+
+    if (availableItems.length < 3) {
+        html += '<div class="notice">Add at least 3 items to your wardrobe first. <a href="/wardrobe.html">Go to Wardrobe →</a></div>';
+        c.innerHTML = html;
+        renderNav('wardrobe');
+        return;
+    }
+
+    html += '<div class="card">' +
+        '<div class="form-group">' +
+            '<label>Destination</label>' +
+            '<input type="text" class="text-input" id="pack-dest" placeholder="e.g. Paris, beach resort, business conference" value="' + packingState.destination + '">' +
+        '</div>' +
+        '<div class="form-row">' +
+            '<div class="form-group" style="flex:1;">' +
+                '<label>Days</label>' +
+                '<input type="number" class="text-input" id="pack-days" value="' + packingState.duration + '" min="1" max="30">' +
+            '</div>' +
+        '</div>' +
+        '<div class="form-group">' +
+            '<label>Activities (optional)</label>' +
+            '<input type="text" class="text-input" id="pack-activities" placeholder="e.g. sightseeing, dinner dates, hiking" value="' + packingState.activities + '">' +
+        '</div>' +
+        '<button class="primary-btn" onclick="generatePackingList()" ' + (packingState.loading ? 'disabled' : '') + '>' +
+            (packingState.loading ? '<span class="spinner" style="width:20px;height:20px;border-width:2px;display:inline-block;vertical-align:middle;"></span> Packing...' : '🧳 Build Packing List') +
+        '</button>' +
+        '</div>';
+
+    // Results
+    if (packingState.results) {
+        const r = packingState.results;
+
+        // Packing list
+        if (r.packingList && r.packingList.length > 0) {
+            html += '<div class="card"><h3 style="margin:0 0 0.75rem;">📋 Pack These Items</h3>';
+            r.packingList.forEach(p => {
+                const item = availableItems[p.itemIndex - 1];
+                const name = item ? (item.name || CATEGORIES.find(ct => ct.id === item.category)?.label || 'Item') : 'Item ' + p.itemIndex;
+                html += '<div class="pack-item-row">' +
+                    '<span class="pack-item-name">' + name + '</span>' +
+                    '<span class="pack-item-reason">' + (p.reason || '') + '</span>' +
+                    '</div>';
+            });
+            html += '</div>';
+        }
+
+        // Outfit combos
+        if (r.outfitCombos && r.outfitCombos.length > 0) {
+            html += '<div class="card"><h3 style="margin:0 0 0.75rem;">👗 Outfit Combos</h3>';
+            r.outfitCombos.forEach(combo => {
+                html += '<div class="pack-combo">' +
+                    '<h4>' + combo.name + '</h4>' +
+                    '<div class="pack-combo-items">';
+                (combo.itemIndices || []).forEach(idx => {
+                    const item = availableItems[idx - 1];
+                    if (item && item.imageBlob) {
+                        html += '<img src="' + blobToObjectURL(item.imageBlob) + '" alt="' + (item.name || '') + '" class="pack-combo-img">';
+                    }
+                });
+                html += '</div></div>';
+            });
+            html += '</div>';
+        }
+
+        // Missing items
+        if (r.missingItems && r.missingItems.length > 0) {
+            html += '<div class="card"><h3 style="margin:0 0 0.5rem;">🛍️ Consider Getting</h3>' +
+                '<ul style="margin:0;padding-left:1.25rem;opacity:0.85;">';
+            r.missingItems.forEach(m => { html += '<li>' + m + '</li>'; });
+            html += '</ul></div>';
+        }
+
+        // Tips
+        if (r.packingTips && r.packingTips.length > 0) {
+            html += '<div class="card"><h3 style="margin:0 0 0.5rem;">💡 Packing Tips</h3>' +
+                '<ul style="margin:0;padding-left:1.25rem;opacity:0.85;">';
+            r.packingTips.forEach(t => { html += '<li>' + t + '</li>'; });
+            html += '</ul></div>';
+        }
+    }
+
+    c.innerHTML = html;
+    renderNav('wardrobe');
+}
+
+async function generatePackingList() {
+    const dest = document.getElementById('pack-dest')?.value?.trim();
+    const days = parseInt(document.getElementById('pack-days')?.value) || 3;
+    const activities = document.getElementById('pack-activities')?.value?.trim();
+
+    if (!dest) { alert('Enter a destination first.'); return; }
+
+    packingState.destination = dest;
+    packingState.duration = days;
+    packingState.activities = activities;
+    packingState.loading = true;
+    renderPacking();
+
+    const items = await dbGetAllItems();
+    const availableItems = items.filter(i => i.available !== false && i.laundry !== true);
+    const profile = getProfile();
+
+    const itemData = availableItems.map(item => ({
+        category: item.category,
+        name: item.name || '',
+        notes: item.notes || '',
+        image: item.imageBlob ? blobToObjectURL(item.imageBlob) : null,
+    }));
+
+    // Fetch weather for destination context
+    let weatherInfo = '';
+    const weather = await fetchWeather();
+    if (weather) weatherInfo = weather.temp + '°F, ' + weather.desc;
+
+    try {
+        const res = await fetch('/api/smart-pack', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                items: itemData.map(i => ({ category: i.category, name: i.name, notes: i.notes })),
+                destination: dest,
+                duration: days,
+                activities: activities || undefined,
+                weather: weatherInfo || undefined,
+                profile: profile ? { vibe: profile.vibe, expression: profile.expression } : undefined,
+            }),
+        });
+
+        if (!res.ok) throw new Error('API error');
+        packingState.results = await res.json();
+    } catch (err) {
+        alert('Could not generate packing list. Make sure OPENAI_API_KEY is configured.');
+    }
+
+    packingState.loading = false;
+    renderPacking();
+}
+
+// ── Wishlist / Shopping Gaps ──────────────────────────────────────
+const WISHLIST_KEY = 'mirror-wishlist';
+
+function getWishlist() {
+    try { return JSON.parse(localStorage.getItem(WISHLIST_KEY) || '[]'); } catch { return []; }
+}
+
+function saveWishlist(list) {
+    localStorage.setItem(WISHLIST_KEY, JSON.stringify(list));
+}
+
+async function showWishlist() {
+    const items = await dbGetAllItems();
+    const wishlist = getWishlist();
+
+    // Detect gaps
+    const counts = {};
+    items.forEach(i => { counts[i.category] = (counts[i.category] || 0) + 1; });
+    const gaps = CATEGORIES.filter(cat => !counts[cat.id] || counts[cat.id] < 2);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'add-item-modal';
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+
+    let html = '<div class="modal-sheet" onclick="event.stopPropagation()">' +
+        '<h2>' + ICONS.cart + ' Wishlist & Gaps</h2>';
+
+    // Wardrobe gaps
+    if (gaps.length > 0) {
+        html += '<div class="card" style="margin-bottom:1rem;">' +
+            '<h4 style="margin:0 0 0.5rem;">Wardrobe Gaps</h4>' +
+            '<p style="margin:0 0 0.5rem;opacity:0.7;font-size:0.85rem;">Categories that could use more items:</p>';
+        gaps.forEach(g => {
+            const count = counts[g.id] || 0;
+            html += '<div class="wishlist-gap">' +
+                '<span>' + g.emoji + ' ' + g.label + '</span>' +
+                '<span style="opacity:0.5;">' + count + ' item' + (count !== 1 ? 's' : '') + '</span>' +
+                '<button class="pill" style="font-size:0.75rem;" onclick="addToWishlist(\'' + g.label + '\')">+ Wishlist</button>' +
+                '</div>';
+        });
+        html += '</div>';
+    }
+
+    // Wishlist items
+    html += '<div class="card">' +
+        '<h4 style="margin:0 0 0.5rem;">Shopping List</h4>';
+
+    if (wishlist.length === 0) {
+        html += '<p style="opacity:0.5;text-align:center;">No items on your wishlist yet. Tap wardrobe gaps above or add manually below.</p>';
+    } else {
+        wishlist.forEach((w, idx) => {
+            html += '<div class="wishlist-item">' +
+                '<span>' + w.name + '</span>' +
+                (w.priority ? '<span class="wishlist-priority ' + w.priority + '">' + w.priority + '</span>' : '') +
+                '<button class="pill" style="font-size:0.75rem;color:var(--negative);" onclick="removeWishlistItem(' + idx + ')">×</button>' +
+                '</div>';
+        });
+    }
+
+    html += '<div style="display:flex;gap:0.5rem;margin-top:0.75rem;">' +
+        '<input type="text" class="text-input" id="wishlist-input" placeholder="Add item..." style="flex:1;">' +
+        '<button class="primary-btn" style="padding:0.5rem 1rem;" onclick="addWishlistFromInput()">Add</button>' +
+        '</div>';
+
+    html += '</div>' +
+        '<button class="secondary-btn" onclick="closeModal()">Close</button></div>';
+
+    overlay.innerHTML = html;
+    document.body.appendChild(overlay);
+}
+
+function addToWishlist(name) {
+    const wishlist = getWishlist();
+    wishlist.push({ name, priority: 'medium', addedAt: new Date().toISOString() });
+    saveWishlist(wishlist);
+    closeModal();
+    showWishlist();
+}
+
+function addWishlistFromInput() {
+    const input = document.getElementById('wishlist-input');
+    if (!input || !input.value.trim()) return;
+    const wishlist = getWishlist();
+    wishlist.push({ name: input.value.trim(), priority: 'medium', addedAt: new Date().toISOString() });
+    saveWishlist(wishlist);
+    closeModal();
+    showWishlist();
+}
+
+function removeWishlistItem(idx) {
+    const wishlist = getWishlist();
+    wishlist.splice(idx, 1);
+    saveWishlist(wishlist);
+    closeModal();
+    showWishlist();
+}
+
 // ── Service Worker ────────────────────────────────────────────────
 async function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
@@ -2621,5 +3453,15 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (path.endsWith('community.html')) {
         if (!getProfile()) { window.location.href = '/onboarding.html'; return; }
         renderCommunity();
+    } else if (path.endsWith('challenges.html')) {
+        if (!getProfile()) { window.location.href = '/onboarding.html'; return; }
+        renderChallenges();
+    } else if (path.endsWith('packing.html')) {
+        if (!getProfile()) { window.location.href = '/onboarding.html'; return; }
+        renderPacking();
+    } else if (path.endsWith('tryon.html')) {
+        if (!getProfile()) { window.location.href = '/onboarding.html'; return; }
+        // tryon is launched via modal from item detail, so redirect to wardrobe
+        window.location.href = '/wardrobe.html';
     }
 });
