@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mirror-v5';
+const CACHE_NAME = 'mirror-v6';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -11,6 +11,9 @@ const CORE_ASSETS = [
   '/calendar.html',
   '/ootd.html',
   '/community.html',
+  '/challenges.html',
+  '/packing.html',
+  '/tryon.html',
   '/css/mirror.css',
   '/js/app.js',
   '/manifest.json'
