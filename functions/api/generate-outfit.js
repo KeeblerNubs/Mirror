@@ -13,7 +13,7 @@ export async function onRequestPost(context) {
         return new Response('Invalid JSON body', { status: 400 });
     }
 
-    const { items, occasion, mood, dressCode, profile, weather } = body;
+    const { items, occasion, mood, dressCode, profile, weather, styleLearning } = body;
     if (!items || !occasion || !mood) {
         return new Response('Missing required fields: items, occasion, mood', { status: 400 });
     }
@@ -22,7 +22,7 @@ export async function onRequestPost(context) {
 
     content.push({
         type: 'text',
-        text: buildGeneratePrompt(items, occasion, mood, dressCode, profile, weather),
+        text: buildGeneratePrompt(items, occasion, mood, dressCode, profile, weather, styleLearning),
     });
 
     items.forEach((item) => {
@@ -94,7 +94,7 @@ COLOR THEORY RULES you MUST follow:
 
 Always respond with valid JSON.`;
 
-function buildGeneratePrompt(items, occasion, mood, dressCode, profile, weather) {
+function buildGeneratePrompt(items, occasion, mood, dressCode, profile, weather, styleLearning) {
     const itemList = items.map((item, idx) => {
         let desc = 'Item ' + (idx + 1) + ' (' + item.category + ')';
         if (item.name) desc += ' — ' + item.name;
@@ -158,6 +158,10 @@ function buildGeneratePrompt(items, occasion, mood, dressCode, profile, weather)
     prompt += '  ]\n';
     prompt += '}\n';
     prompt += 'Use the item numbers (1-based) from the list above. Be specific about why each piece works together, including color harmony.';
+
+    if (styleLearning) {
+        prompt += '\n\n' + styleLearning;
+    }
 
     return prompt;
 }
