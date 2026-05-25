@@ -714,6 +714,190 @@ select.text-input {
 }
 .toggle.on::after { transform: translateX(20px); }
 
+/* ── Outfit Card Actions ── */
+.outfit-card-actions {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+    transition: color 0.2s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.icon-btn:hover { color: var(--accent); }
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn svg { width: 18px; height: 18px; }
+.icon-btn.liked { color: #ff4466; }
+.icon-btn.liked svg { fill: #ff4466; }
+
+/* ── Outfit Meta ── */
+.outfit-meta {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+}
+
+/* ── Analytics Bars ── */
+.analytics-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+.analytics-bar-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    width: 6rem;
+    flex-shrink: 0;
+}
+.analytics-bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--card-border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.analytics-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    min-width: 4px;
+}
+.analytics-bar-value {
+    font-size: 0.8rem;
+    font-weight: 700;
+    width: 2rem;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* ── Top Items ── */
+.top-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.top-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--card-border);
+}
+.top-item-row:last-child { border-bottom: none; }
+.top-item-name { font-weight: 600; font-size: 0.9rem; }
+.top-item-count { font-size: 0.8rem; color: var(--muted); }
+
+/* ── Calendar ── */
+.calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0.5rem;
+}
+.calendar-month-label {
+    margin: 0;
+    font-size: 1.1rem;
+}
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+.calendar-day-header {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--muted);
+    padding: 0.5rem 0;
+}
+.calendar-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+.calendar-cell:active { transform: scale(0.95); }
+.calendar-cell.empty {
+    background: transparent;
+    border-color: transparent;
+    cursor: default;
+}
+.calendar-cell.empty:active { transform: none; }
+.calendar-cell.today {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+.calendar-cell.has-outfit { border-color: var(--positive); }
+.calendar-date {
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 1;
+}
+.calendar-thumb {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.35;
+}
+.calendar-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--positive);
+    margin-top: 2px;
+}
+
+/* ── Calendar Day Picker ── */
+.calendar-pick-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.calendar-pick-row:hover { border-color: var(--accent); }
+.calendar-pick-row:active { transform: scale(0.98); }
+.calendar-pick-thumbs {
+    display: flex;
+    gap: 0.25rem;
+}
+.calendar-pick-thumbs img {
+    width: 36px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 0.35rem;
+}
+.calendar-pick-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
 /* ── Utility ── */
 .gap-sm { gap: 0.5rem; }
 .mt-1 { margin-top: 1rem; }
