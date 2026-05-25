@@ -80,6 +80,18 @@ const ICONS = {
     share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>',
     heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
+    remix: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>',
+    scan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2"/><path d="M17 3h2a2 2 0 012 2v2"/><path d="M21 17v2a2 2 0 01-2 2h-2"/><path d="M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>',
+    sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
+    community: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',
+};
+
+const SEASONS = ['Spring', 'Summer', 'Fall', 'Winter'];
+const SEASON_ITEMS = {
+    Spring: ['light jackets', 'layering pieces', 'rain jackets', 'light sweaters'],
+    Summer: ['shorts', 'tank tops', 't-shirts', 'sandals', 'sunglasses', 'light dresses'],
+    Fall: ['sweaters', 'boots', 'jackets', 'scarves', 'layering pieces'],
+    Winter: ['heavy coats', 'boots', 'scarves', 'gloves', 'beanies', 'warm layers'],
 };
 
 // ── Theme System ──────────────────────────────────────────────────
@@ -585,11 +597,49 @@ async function renderBoard() {
         html += '</div></div>';
     }
 
+    // Analytics: cost-per-wear
+    const pricedItems = items.filter(i => i.price && i.price > 0);
+    if (pricedItems.length > 0) {
+        const totalSpent = pricedItems.reduce((sum, i) => sum + i.price, 0);
+        html += '<div class="card">' +
+            '<h3 style="margin:0 0 0.75rem;">Cost Analysis</h3>' +
+            '<div class="wardrobe-stats">' +
+                '<div class="stat-card"><div class="stat-num">$' + totalSpent.toFixed(0) + '</div><div class="stat-label">Total Spent</div></div>' +
+                '<div class="stat-card"><div class="stat-num">$' + (totalSpent / pricedItems.length).toFixed(0) + '</div><div class="stat-label">Avg Price</div></div>' +
+            '</div>';
+
+        // Best and worst cost-per-wear
+        const cpwItems = pricedItems.map(item => {
+            let wc = 0;
+            outfits.forEach(o => {
+                if ((o.itemIds || []).includes(item.id)) wc += Math.max((o.wornDates || []).length, 1);
+            });
+            return { item, cpw: wc > 0 ? item.price / wc : item.price, wearCount: wc };
+        }).sort((a, b) => a.cpw - b.cpw);
+
+        const bestCpw = cpwItems.filter(c => c.wearCount > 0).slice(0, 3);
+        if (bestCpw.length > 0) {
+            html += '<div class="top-items-list" style="margin-top:0.5rem;">';
+            bestCpw.forEach(c => {
+                const catLabel = CATEGORIES.find(ct => ct.id === c.item.category)?.label || c.item.category;
+                html += '<div class="top-item-row">' +
+                    '<span class="top-item-name">' + (c.item.name || catLabel) + '</span>' +
+                    '<span class="top-item-count cpw-low">$' + c.cpw.toFixed(2) + '/wear</span>' +
+                    '</div>';
+            });
+            html += '</div>';
+        }
+
+        html += '</div>';
+    }
+
     html +=
         '<div class="board-actions">' +
             '<button class="primary-btn" onclick="window.location.href=\'/wardrobe.html\'">📸 Manage Wardrobe</button>' +
             '<button class="secondary-btn" onclick="window.location.href=\'/saved.html\'">💾 Saved Outfits</button>' +
             '<button class="secondary-btn" onclick="window.location.href=\'/calendar.html\'">📅 Outfit Calendar</button>' +
+            '<button class="secondary-btn" onclick="window.location.href=\'/ootd.html\'">☀️ Outfit of the Day</button>' +
+            '<button class="secondary-btn" onclick="window.location.href=\'/community.html\'">👥 Community</button>' +
             '<button class="secondary-btn" onclick="resetProfile()" style="color:var(--negative);">🔄 Start Over</button>' +
         '</div>';
 
@@ -636,6 +686,12 @@ async function renderWardrobe() {
             (count > 0 ? ' (' + count + ')' : '') + '</button>';
     });
     html += '</div>';
+
+    // action row
+    html += '<div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">' +
+        '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="openBatchScanModal()">' + ICONS.scan + ' Batch Scan</button>' +
+        '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="showSeasonalAdvice()">' + ICONS.sun + ' Seasonal Tips</button>' +
+        '</div>';
 
     // grid
     html += '<div class="wardrobe-grid">';
@@ -710,8 +766,22 @@ function openAddItemModal() {
                 '<input type="text" class="text-input" id="item-name" placeholder="e.g. Blue denim jacket">' +
             '</div>' +
             '<div class="form-group">' +
+                '<label>Brand (optional)</label>' +
+                '<input type="text" class="text-input" id="item-brand" placeholder="e.g. Nike, Zara, Vintage">' +
+            '</div>' +
+            '<div class="form-row">' +
+                '<div class="form-group" style="flex:1;">' +
+                    '<label>Price (optional)</label>' +
+                    '<input type="number" class="text-input" id="item-price" placeholder="$" min="0" step="0.01">' +
+                '</div>' +
+                '<div class="form-group" style="flex:1;">' +
+                    '<label>Purchased</label>' +
+                    '<input type="date" class="text-input" id="item-purchase-date">' +
+                '</div>' +
+            '</div>' +
+            '<div class="form-group">' +
                 '<label>Notes (optional)</label>' +
-                '<textarea class="text-input" id="item-notes" placeholder="Color, brand, fit notes..."></textarea>' +
+                '<textarea class="text-input" id="item-notes" placeholder="Color, fit notes..."></textarea>' +
             '</div>' +
             '<button class="primary-btn" id="save-item-btn" onclick="saveNewItem()" disabled>Save Item</button>' +
             '<button class="secondary-btn" onclick="closeModal()">Cancel</button>' +
@@ -755,11 +825,15 @@ async function saveNewItem() {
     const imageBlob = await compressImage(pendingFile, 800, 0.85);
     const thumbnailBlob = await compressImage(pendingFile, 200, 0.7);
 
+    const priceVal = document.getElementById('item-price')?.value;
     const item = {
         id: crypto.randomUUID(),
         category: document.getElementById('item-category')?.value || 'tops',
         name: document.getElementById('item-name')?.value.trim() || '',
         notes: document.getElementById('item-notes')?.value.trim() || '',
+        brand: document.getElementById('item-brand')?.value.trim() || '',
+        price: priceVal ? parseFloat(priceVal) : null,
+        purchaseDate: document.getElementById('item-purchase-date')?.value || null,
         imageBlob: imageBlob,
         thumbnailBlob: thumbnailBlob,
         available: true,
@@ -792,12 +866,25 @@ async function openItemDetail(id) {
     overlay.id = 'add-item-modal';
     overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
 
+    // Calculate cost-per-wear
+    const outfits = await dbGetAllOutfits();
+    let wearCount = 0;
+    outfits.forEach(o => {
+        if ((o.itemIds || []).includes(item.id)) wearCount += Math.max((o.wornDates || []).length, 1);
+    });
+    const costPerWear = item.price && wearCount > 0 ? (item.price / wearCount).toFixed(2) : null;
+
     overlay.innerHTML =
         '<div class="modal-sheet" onclick="event.stopPropagation()">' +
             '<h2>' + (item.name || catLabel) + '</h2>' +
             '<img class="item-detail-img" src="' + url + '" alt="' + (item.name || catLabel) + '">' +
             '<div class="item-detail-meta">' +
                 '<div class="meta-row"><span class="meta-label">Category</span><span class="meta-value">' + catLabel + '</span></div>' +
+                (item.brand ? '<div class="meta-row"><span class="meta-label">Brand</span><span class="meta-value">' + item.brand + '</span></div>' : '') +
+                (item.price ? '<div class="meta-row"><span class="meta-label">Price</span><span class="meta-value">$' + item.price.toFixed(2) + '</span></div>' : '') +
+                (costPerWear ? '<div class="meta-row"><span class="meta-label">Cost/Wear</span><span class="meta-value cpw-' + (parseFloat(costPerWear) > 20 ? 'high' : 'low') + '">$' + costPerWear + '</span></div>' : '') +
+                (wearCount > 0 ? '<div class="meta-row"><span class="meta-label">Worn</span><span class="meta-value">' + wearCount + ' time' + (wearCount !== 1 ? 's' : '') + '</span></div>' : '') +
+                (item.purchaseDate ? '<div class="meta-row"><span class="meta-label">Purchased</span><span class="meta-value">' + new Date(item.purchaseDate + 'T12:00:00').toLocaleDateString() + '</span></div>' : '') +
                 (item.notes ? '<div class="meta-row"><span class="meta-label">Notes</span><span class="meta-value">' + item.notes + '</span></div>' : '') +
                 '<div class="meta-row"><span class="meta-label">Added</span><span class="meta-value">' + new Date(item.addedAt).toLocaleDateString() + '</span></div>' +
                 '<div class="toggle-row">' +
@@ -805,6 +892,7 @@ async function openItemDetail(id) {
                     '<button class="toggle' + (isAvailable ? ' on' : '') + '" id="avail-toggle" onclick="toggleItemAvailability(\'' + item.id + '\')"></button>' +
                 '</div>' +
             '</div>' +
+            '<button class="primary-btn" onclick="closeModal();startRemix(\'' + item.id + '\')">🔀 Remix — 5 Ways to Wear This</button>' +
             '<button class="secondary-btn" style="color:var(--negative);" onclick="deleteWardrobeItem(\'' + item.id + '\');closeModal()">Delete Item</button>' +
             '<button class="secondary-btn" onclick="closeModal()">Close</button>' +
         '</div>';
@@ -856,6 +944,12 @@ async function renderGenerate() {
 
     // weather widget slot
     html += '<div id="weather-slot">' + renderWeatherWidget(generateState.weather) + '</div>';
+
+    // Quick actions
+    html += '<div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">' +
+        '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="window.location.href=\'/ootd.html\'">☀️ Today\'s Pick</button>' +
+        '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="window.location.href=\'/community.html\'">' + ICONS.community + ' Community</button>' +
+        '</div>';
 
     if (availableItems.length < 3) {
         html += '<div class="notice">You need at least 3 available items in your wardrobe to generate outfits. ' +
@@ -1719,6 +1813,769 @@ async function removeCalendarOutfit(outfitId, dateStr) {
     renderCalendar();
 }
 
+// ── Outfit of the Day ─────────────────────────────────────────────
+let ootdState = { result: null, loading: false };
+
+async function renderOOTD() {
+    const p = getProfile();
+    if (!p) { window.location.href = '/onboarding.html'; return; }
+
+    const c = document.getElementById('page-content');
+    if (!c) return;
+
+    const items = await dbGetAllItems();
+    const availableItems = items.filter(i => i.available !== false);
+    const weather = await fetchWeather();
+
+    let html =
+        '<div class="page-header">' +
+            '<h1>Outfit of the Day</h1>' +
+            '<p>Your AI-curated look for today</p>' +
+        '</div>';
+
+    html += '<div id="weather-slot">' + renderWeatherWidget(weather) + '</div>';
+
+    if (availableItems.length < 3) {
+        html += '<div class="notice">You need at least 3 available items to get an OOTD. ' +
+            '<a href="/wardrobe.html">Add items →</a></div>';
+        c.innerHTML = html;
+        renderNav('generate');
+        return;
+    }
+
+    if (ootdState.loading) {
+        html += '<div class="ootd-loading">' +
+            '<span class="spinner"></span>' +
+            '<p>Picking the perfect look for today...</p>' +
+            '</div>';
+    } else if (ootdState.result) {
+        const outfit = ootdState.result;
+        html += '<div class="ootd-card" id="ootd-card">';
+        html += '<div class="ootd-badge">☀️ Today\'s Look</div>';
+        html += '<h2 style="margin:0 0 0.5rem;">' + (outfit.name || 'Your Look') + '</h2>';
+        if (outfit.itemImages && outfit.itemImages.length > 0) {
+            html += '<div class="outfit-card-items">';
+            outfit.itemImages.forEach(img => {
+                html += '<img src="' + img.url + '" alt="' + (img.label || '') + '">';
+            });
+            html += '</div>';
+        }
+        html += '<div class="outfit-card-body"><p>' + (outfit.reasoning || '') + '</p></div>';
+        html += '<div class="ootd-actions">' +
+            '<button class="primary-btn" onclick="saveOOTD()">💾 Save</button>' +
+            '<button class="secondary-btn" onclick="shareOutfitCard(\'ootd-card\')">📤 Share</button>' +
+            '</div>';
+        html += '</div>';
+    } else {
+        html += '<div class="ootd-prompt">' +
+            '<div class="ootd-prompt-icon">✨</div>' +
+            '<p>Tap below to get your personalized outfit for today, based on the weather, your style, and what\'s in your closet.</p>' +
+            '<button class="primary-btn" onclick="generateOOTD()">Get Today\'s Outfit</button>' +
+            '</div>';
+    }
+
+    html += '<button class="secondary-btn mt-1" style="width:100%;" onclick="ootdState.result=null;generateOOTD()">🔄 Get a Different Look</button>';
+
+    c.innerHTML = html;
+    renderNav('generate');
+}
+
+async function generateOOTD() {
+    ootdState.loading = true;
+    ootdState.result = null;
+    renderOOTD();
+
+    const items = await dbGetAllItems();
+    const availableItems = items.filter(i => i.available !== false);
+    const profile = getProfile();
+    const weather = await fetchWeather();
+    const styleLearning = await getStyleLearningContext();
+
+    // Check calendar for today
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    const outfits = await dbGetAllOutfits();
+    const todayOutfit = outfits.find(o => (o.wornDates || []).includes(todayStr));
+
+    const itemPayloads = await Promise.all(availableItems.map(async (item) => {
+        const base64 = await blobToBase64(item.imageBlob);
+        return {
+            category: item.category,
+            name: item.name || '',
+            notes: item.notes || '',
+            image: base64,
+        };
+    }));
+
+    try {
+        const requestBody = {
+            items: itemPayloads,
+            occasion: todayOutfit ? 'Continue with planned outfit' : 'Daily wear — whatever the day brings',
+            mood: 'Confident and comfortable',
+            dressCode: 'casual',
+            profile: { vibe: profile.vibe, expression: profile.expression, adventure: profile.adventure, name: profile.name },
+            styleLearning: styleLearning,
+            ootdMode: true,
+        };
+
+        if (weather) {
+            requestBody.weather = { temp: weather.temp, desc: weather.desc, season: weather.season };
+        }
+
+        const response = await fetch('/api/generate-outfit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) throw new Error('API error');
+
+        const data = await response.json();
+        const outfit = (data.outfits || [])[0];
+
+        if (outfit) {
+            const matchedItems = (outfit.itemIndices || []).map(idx => {
+                const item = availableItems[idx - 1];
+                if (!item) return null;
+                return { id: item.id, url: blobToObjectURL(item.imageBlob), label: item.name || item.category };
+            }).filter(Boolean);
+
+            ootdState.result = {
+                name: outfit.name || 'Today\'s Look',
+                reasoning: outfit.reasoning || '',
+                itemImages: matchedItems,
+                itemIds: matchedItems.map(m => m.id),
+            };
+        }
+    } catch (err) {
+        console.error('OOTD error:', err);
+        ootdState.result = { name: 'Could not generate', reasoning: 'Something went wrong. Try again!', itemImages: [], itemIds: [] };
+    }
+
+    ootdState.loading = false;
+    renderOOTD();
+}
+
+async function saveOOTD() {
+    if (!ootdState.result || !ootdState.result.itemIds || ootdState.result.itemIds.length === 0) return;
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+
+    const saved = {
+        id: crypto.randomUUID(),
+        name: ootdState.result.name || 'OOTD',
+        itemIds: ootdState.result.itemIds,
+        reasoning: ootdState.result.reasoning || '',
+        occasion: 'Outfit of the Day',
+        mood: '',
+        dressCode: '',
+        source: 'ootd',
+        critique: null,
+        liked: false,
+        wornDates: [todayStr],
+        savedAt: new Date().toISOString(),
+    };
+
+    await dbAddOutfit(saved);
+    alert('Outfit of the Day saved!');
+}
+
+// ── Outfit Remix ──────────────────────────────────────────────────
+let remixState = { pinnedItemId: null, results: null, loading: false };
+
+async function startRemix(itemId) {
+    remixState.pinnedItemId = itemId;
+    remixState.results = null;
+    remixState.loading = true;
+
+    // Show loading in a modal
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'add-item-modal';
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+    overlay.innerHTML = '<div class="modal-sheet" onclick="event.stopPropagation()">' +
+        '<h2>🔀 Remixing...</h2>' +
+        '<div style="text-align:center;padding:2rem;">' +
+            '<span class="spinner"></span>' +
+            '<p>Finding 5 ways to wear this item...</p>' +
+        '</div>' +
+        '</div>';
+    document.body.appendChild(overlay);
+
+    const items = await dbGetAllItems();
+    const pinnedItem = items.find(i => i.id === itemId);
+    if (!pinnedItem) { closeModal(); return; }
+
+    const availableItems = items.filter(i => i.available !== false);
+    const profile = getProfile();
+    const styleLearning = await getStyleLearningContext();
+
+    const itemPayloads = await Promise.all(availableItems.map(async (item) => {
+        const base64 = await blobToBase64(item.imageBlob);
+        return {
+            category: item.category,
+            name: item.name || '',
+            notes: item.notes || '',
+            image: base64,
+        };
+    }));
+
+    const pinnedIdx = availableItems.findIndex(i => i.id === itemId) + 1;
+
+    try {
+        const requestBody = {
+            items: itemPayloads,
+            occasion: 'Versatile — show different ways to style this piece',
+            mood: 'Varied — show range from casual to dressy',
+            dressCode: '',
+            profile: { vibe: profile.vibe, expression: profile.expression, adventure: profile.adventure, name: profile.name },
+            styleLearning: styleLearning,
+            remixMode: true,
+            pinnedItemIndex: pinnedIdx,
+            pinnedItemName: pinnedItem.name || pinnedItem.category,
+        };
+
+        const response = await fetch('/api/generate-outfit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) throw new Error('API error');
+
+        const data = await response.json();
+        remixState.results = (data.outfits || []).map(outfit => {
+            const matchedItems = (outfit.itemIndices || []).map(idx => {
+                const item = availableItems[idx - 1];
+                if (!item) return null;
+                return { id: item.id, url: blobToObjectURL(item.imageBlob), label: item.name || item.category };
+            }).filter(Boolean);
+            return {
+                name: outfit.name || '',
+                reasoning: outfit.reasoning || '',
+                itemImages: matchedItems,
+                itemIds: matchedItems.map(m => m.id),
+            };
+        });
+    } catch (err) {
+        console.error('Remix error:', err);
+        remixState.results = [{ name: 'Could not generate', reasoning: 'Something went wrong.', itemImages: [], itemIds: [] }];
+    }
+
+    remixState.loading = false;
+
+    // Update modal with results
+    const modal = document.querySelector('.modal-sheet');
+    if (!modal) return;
+
+    let modalHtml = '<h2>🔀 5 Ways to Wear: ' + (pinnedItem.name || CATEGORIES.find(c => c.id === pinnedItem.category)?.label || 'This Item') + '</h2>';
+    modalHtml += '<div style="display:flex;flex-direction:column;gap:1rem;max-height:60vh;overflow-y:auto;">';
+
+    (remixState.results || []).forEach((outfit, idx) => {
+        modalHtml += '<div class="outfit-card" id="remix-card-' + idx + '">';
+        modalHtml += '<div class="outfit-card-header"><h3>' + (outfit.name || 'Look ' + (idx + 1)) + '</h3>' +
+            '<div class="outfit-card-actions">' +
+                '<button class="icon-btn" onclick="saveRemixOutfit(' + idx + ')" title="Save">' + ICONS.saved + '</button>' +
+            '</div>' +
+            '</div>';
+        if (outfit.itemImages.length > 0) {
+            modalHtml += '<div class="outfit-card-items">';
+            outfit.itemImages.forEach(img => {
+                modalHtml += '<img src="' + img.url + '" alt="' + (img.label || '') + '">';
+            });
+            modalHtml += '</div>';
+        }
+        modalHtml += '<div class="outfit-card-body"><p>' + (outfit.reasoning || '') + '</p></div>';
+        modalHtml += '</div>';
+    });
+
+    modalHtml += '</div>';
+    modalHtml += '<button class="secondary-btn" onclick="closeModal()">Close</button>';
+    modal.innerHTML = modalHtml;
+}
+
+async function saveRemixOutfit(idx) {
+    const outfit = remixState.results[idx];
+    if (!outfit || !outfit.itemIds || outfit.itemIds.length === 0) return;
+
+    const saved = {
+        id: crypto.randomUUID(),
+        name: outfit.name || 'Remix Look',
+        itemIds: outfit.itemIds,
+        reasoning: outfit.reasoning || '',
+        occasion: '',
+        mood: '',
+        dressCode: '',
+        source: 'remix',
+        critique: null,
+        liked: false,
+        wornDates: [],
+        savedAt: new Date().toISOString(),
+    };
+
+    await dbAddOutfit(saved);
+    const btn = document.querySelector('#remix-card-' + idx + ' .icon-btn');
+    if (btn) { btn.style.color = 'var(--positive)'; btn.innerHTML = '✓'; }
+}
+
+// ── Batch Scan (Wardrobe Import from Photos) ──────────────────────
+let batchScanState = { detecting: false, detected: [], imageData: null };
+
+function openBatchScanModal() {
+    batchScanState = { detecting: false, detected: [], imageData: null };
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'add-item-modal';
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+
+    overlay.innerHTML =
+        '<div class="modal-sheet" onclick="event.stopPropagation()">' +
+            '<h2>📸 Batch Scan</h2>' +
+            '<p style="opacity:0.7;margin:0 0 1rem;">Take a photo of your closet, clothing rack, or flat lay — AI will detect and categorize every item.</p>' +
+            '<div class="upload-area" id="scan-upload-area" onclick="triggerScanInput()">' +
+                ICONS.scan +
+                '<p>Tap to take a photo of multiple items</p>' +
+            '</div>' +
+            '<input type="file" id="scan-file-input" accept="image/*" capture="environment" style="display:none" onchange="handleScanFile(event)">' +
+            '<div id="scan-preview" class="hidden"></div>' +
+            '<div id="scan-results"></div>' +
+            '<button class="secondary-btn" onclick="closeModal()">Cancel</button>' +
+        '</div>';
+
+    document.body.appendChild(overlay);
+}
+
+function triggerScanInput() {
+    document.getElementById('scan-file-input')?.click();
+}
+
+async function handleScanFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        batchScanState.imageData = e.target.result;
+        const preview = document.getElementById('scan-preview');
+        const uploadArea = document.getElementById('scan-upload-area');
+        if (preview) {
+            preview.innerHTML = '<img class="item-detail-img" src="' + e.target.result + '" alt="Scan">';
+            preview.classList.remove('hidden');
+        }
+        if (uploadArea) uploadArea.classList.add('hidden');
+
+        // Start detection
+        batchScanState.detecting = true;
+        const results = document.getElementById('scan-results');
+        if (results) results.innerHTML = '<div style="text-align:center;padding:1rem;"><span class="spinner"></span><p>AI is detecting items...</p></div>';
+
+        try {
+            const response = await fetch('/api/detect-items', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: e.target.result }),
+            });
+
+            if (!response.ok) throw new Error('Detection failed');
+
+            const data = await response.json();
+            batchScanState.detected = data.items || [];
+            batchScanState.detecting = false;
+            renderScanResults();
+        } catch (err) {
+            console.error('Scan error:', err);
+            batchScanState.detecting = false;
+            if (results) results.innerHTML = '<p style="color:var(--negative);">Detection failed. Try again with a clearer photo.</p>';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function renderScanResults() {
+    const results = document.getElementById('scan-results');
+    if (!results) return;
+
+    if (batchScanState.detected.length === 0) {
+        results.innerHTML = '<p>No items detected. Try a clearer photo with items spread out.</p>';
+        return;
+    }
+
+    let html = '<h3 style="margin:1rem 0 0.5rem;">' + batchScanState.detected.length + ' items detected</h3>';
+    html += '<div style="display:flex;flex-direction:column;gap:0.5rem;">';
+
+    batchScanState.detected.forEach((item, idx) => {
+        const catEmoji = CATEGORIES.find(c => c.id === item.category)?.emoji || '👕';
+        html += '<div class="scan-item-row" id="scan-item-' + idx + '">' +
+            '<div class="scan-item-info">' +
+                '<span class="scan-item-emoji">' + catEmoji + '</span>' +
+                '<div>' +
+                    '<div class="scan-item-name">' + (item.name || 'Unknown Item') + '</div>' +
+                    '<div class="scan-item-cat">' + (item.category || 'tops') + (item.notes ? ' · ' + item.notes : '') + '</div>' +
+                '</div>' +
+            '</div>' +
+            '<button class="icon-btn" onclick="toggleScanItem(' + idx + ')" id="scan-toggle-' + idx + '" style="color:var(--positive);">✓</button>' +
+            '</div>';
+    });
+
+    html += '</div>';
+    html += '<button class="primary-btn mt-1" onclick="importScannedItems()">Import Selected Items</button>';
+
+    results.innerHTML = html;
+}
+
+function toggleScanItem(idx) {
+    const btn = document.getElementById('scan-toggle-' + idx);
+    const row = document.getElementById('scan-item-' + idx);
+    if (!btn || !row) return;
+
+    if (btn.style.color === 'var(--muted)') {
+        btn.style.color = 'var(--positive)';
+        btn.textContent = '✓';
+        row.style.opacity = '1';
+    } else {
+        btn.style.color = 'var(--muted)';
+        btn.textContent = '✗';
+        row.style.opacity = '0.4';
+    }
+}
+
+async function importScannedItems() {
+    const selected = [];
+    batchScanState.detected.forEach((item, idx) => {
+        const btn = document.getElementById('scan-toggle-' + idx);
+        if (btn && btn.style.color !== 'var(--muted)') {
+            selected.push(item);
+        }
+    });
+
+    if (selected.length === 0) { alert('No items selected.'); return; }
+
+    // Create a placeholder image for scanned items (no individual photos)
+    const placeholderCanvas = document.createElement('canvas');
+    placeholderCanvas.width = 200;
+    placeholderCanvas.height = 200;
+    const pCtx = placeholderCanvas.getContext('2d');
+    const bgColor = getComputedStyle(document.body).getPropertyValue('--card-bg').trim() || '#111';
+    pCtx.fillStyle = bgColor;
+    pCtx.fillRect(0, 0, 200, 200);
+    pCtx.fillStyle = '#666';
+    pCtx.font = '48px sans-serif';
+    pCtx.textAlign = 'center';
+    pCtx.textBaseline = 'middle';
+
+    for (const item of selected) {
+        const catEmoji = CATEGORIES.find(c => c.id === item.category)?.emoji || '👕';
+        pCtx.clearRect(0, 0, 200, 200);
+        pCtx.fillStyle = bgColor;
+        pCtx.fillRect(0, 0, 200, 200);
+        pCtx.fillStyle = '#666';
+        pCtx.font = '48px sans-serif';
+        pCtx.fillText(catEmoji, 100, 80);
+        pCtx.font = '14px sans-serif';
+        pCtx.fillText(item.name || item.category, 100, 140);
+
+        const blob = await new Promise(r => placeholderCanvas.toBlob(r, 'image/jpeg', 0.8));
+
+        await dbAddItem({
+            id: crypto.randomUUID(),
+            category: item.category || 'tops',
+            name: item.name || '',
+            notes: item.notes || '',
+            brand: '',
+            price: null,
+            purchaseDate: null,
+            imageBlob: blob,
+            thumbnailBlob: blob,
+            available: true,
+            addedAt: new Date().toISOString(),
+        });
+    }
+
+    closeModal();
+    alert(selected.length + ' item(s) imported! You can update their photos individually.');
+    renderWardrobe();
+}
+
+// ── Seasonal Rotation ─────────────────────────────────────────────
+async function showSeasonalAdvice() {
+    const weather = await fetchWeather();
+    const currentSeason = weather ? weather.season : getSeason(40);
+    const items = await dbGetAllItems();
+    const counts = {};
+    CATEGORIES.forEach(cat => counts[cat.id] = 0);
+    items.forEach(item => { if (counts[item.category] !== undefined) counts[item.category]++; });
+
+    const suggestions = SEASON_ITEMS[currentSeason] || [];
+    const otherSeasons = SEASONS.filter(s => s !== currentSeason);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'add-item-modal';
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+
+    let modalHtml = '<div class="modal-sheet" onclick="event.stopPropagation()">' +
+        '<h2>' + ICONS.sun + ' Seasonal Guide</h2>' +
+        '<div class="seasonal-badge">' + currentSeason + '</div>';
+
+    // Current season essentials
+    modalHtml += '<div class="card" style="margin:1rem 0;">' +
+        '<h3 style="margin:0 0 0.5rem;">' + currentSeason + ' Essentials</h3>' +
+        '<p style="margin:0;opacity:0.7;font-size:0.85rem;">Make sure you have these for the current season:</p>' +
+        '<div class="seasonal-items">';
+    suggestions.forEach(s => {
+        modalHtml += '<span class="seasonal-tag">' + s + '</span>';
+    });
+    modalHtml += '</div></div>';
+
+    // Capsule wardrobe recommendation
+    const totalItems = items.length;
+    const capsuleTarget = 33;
+    modalHtml += '<div class="card" style="margin:0 0 1rem;">' +
+        '<h3 style="margin:0 0 0.5rem;">Capsule Wardrobe</h3>';
+    if (totalItems <= capsuleTarget) {
+        modalHtml += '<p style="margin:0;opacity:0.7;font-size:0.85rem;">You have ' + totalItems + ' items — that\'s a lean wardrobe! A typical capsule wardrobe has about 33 pieces. You\'re ' + (totalItems < capsuleTarget ? 'well within range.' : 'right at the sweet spot.') + '</p>';
+    } else {
+        modalHtml += '<p style="margin:0;opacity:0.7;font-size:0.85rem;">You have ' + totalItems + ' items. Consider archiving ' + (totalItems - capsuleTarget) + ' items for the off-season to create a focused capsule wardrobe of ~33 pieces.</p>';
+    }
+    modalHtml += '</div>';
+
+    // Off-season items to store
+    modalHtml += '<div class="card" style="margin:0 0 1rem;">' +
+        '<h3 style="margin:0 0 0.5rem;">Consider Storing for Off-Season</h3>' +
+        '<p style="margin:0;opacity:0.7;font-size:0.85rem;">These categories are less needed in ' + currentSeason + ':</p>' +
+        '<div class="seasonal-items">';
+
+    const offSeasonCats = {
+        Spring: ['heavy coats', 'thick scarves'],
+        Summer: ['heavy coats', 'boots', 'scarves', 'thick sweaters'],
+        Fall: ['sandals', 'tank tops', 'swim wear'],
+        Winter: ['sandals', 'shorts', 'tank tops', 'sunglasses'],
+    };
+    (offSeasonCats[currentSeason] || []).forEach(s => {
+        modalHtml += '<span class="seasonal-tag off-season">' + s + '</span>';
+    });
+    modalHtml += '</div></div>';
+
+    // Mark items as stored
+    modalHtml += '<p style="opacity:0.6;font-size:0.8rem;">Tip: Use the "Available to wear" toggle on individual items to mark off-season items as stored.</p>';
+
+    modalHtml += '<button class="secondary-btn" onclick="closeModal()">Got It</button>';
+    modalHtml += '</div>';
+
+    overlay.innerHTML = modalHtml;
+    document.body.appendChild(overlay);
+}
+
+// ── Community / Social Feed ───────────────────────────────────────
+async function renderCommunity() {
+    const p = getProfile();
+    if (!p) { window.location.href = '/onboarding.html'; return; }
+
+    const c = document.getElementById('page-content');
+    if (!c) return;
+
+    const outfits = await dbGetAllOutfits();
+    const items = await dbGetAllItems();
+
+    // Show shared outfits + import option
+    const sharedOutfits = outfits.filter(o => o.shared);
+    const allOutfits = outfits.sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || ''));
+
+    let html =
+        '<div class="page-header">' +
+            '<h1>Community</h1>' +
+            '<p>Share your looks & import outfit ideas</p>' +
+        '</div>';
+
+    // Export / Import section
+    html += '<div class="card">' +
+        '<h3 style="margin:0 0 0.5rem;">Share & Import</h3>' +
+        '<div style="display:flex;gap:0.5rem;">' +
+            '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="exportOutfitCodes()">📤 Export My Looks</button>' +
+            '<button class="secondary-btn" style="flex:1;font-size:0.85rem;" onclick="openImportModal()">📥 Import Look</button>' +
+        '</div>' +
+        '</div>';
+
+    // Your shared looks
+    html += '<h3 style="margin:1rem 0 0.5rem;">Your Outfit Feed</h3>';
+
+    if (allOutfits.length === 0) {
+        html += '<div class="empty-state">' +
+            '<div class="empty-icon">👥</div>' +
+            '<h3>No outfits yet</h3>' +
+            '<p>Save some outfits to see them in your feed.</p>' +
+            '</div>';
+    } else {
+        html += '<div class="feed-grid">';
+        allOutfits.forEach(outfit => {
+            const outfitItems = (outfit.itemIds || []).map(id => items.find(i => i.id === id)).filter(Boolean);
+            const firstItem = outfitItems[0];
+            const thumbUrl = firstItem ? blobToObjectURL(firstItem.thumbnailBlob || firstItem.imageBlob) : '';
+
+            html += '<div class="feed-card" onclick="openFeedDetail(\'' + outfit.id + '\')">' +
+                (thumbUrl ? '<img class="feed-thumb" src="' + thumbUrl + '" alt="">' : '<div class="feed-thumb-placeholder">✨</div>') +
+                '<div class="feed-info">' +
+                    '<span class="feed-name">' + (outfit.name || 'Outfit') + '</span>' +
+                    '<span class="feed-date">' + new Date(outfit.savedAt).toLocaleDateString() + '</span>' +
+                '</div>' +
+                '</div>';
+        });
+        html += '</div>';
+    }
+
+    c.innerHTML = html;
+    renderNav('generate');
+}
+
+async function exportOutfitCodes() {
+    const outfits = await dbGetAllOutfits();
+    const items = await dbGetAllItems();
+
+    if (outfits.length === 0) { alert('No outfits to export.'); return; }
+
+    const exportData = outfits.slice(0, 10).map(o => {
+        const outfitItems = (o.itemIds || []).map(id => {
+            const item = items.find(i => i.id === id);
+            return item ? { name: item.name || item.category, category: item.category, notes: item.notes, brand: item.brand || '' } : null;
+        }).filter(Boolean);
+        return {
+            name: o.name || 'Outfit',
+            items: outfitItems,
+            occasion: o.occasion || '',
+            mood: o.mood || '',
+            reasoning: o.reasoning || '',
+        };
+    });
+
+    const code = btoa(unescape(encodeURIComponent(JSON.stringify(exportData))));
+
+    // Copy to clipboard
+    try {
+        await navigator.clipboard.writeText(code);
+        alert('Share code copied to clipboard! Send it to friends so they can import your looks.');
+    } catch {
+        // Fallback: show in a modal
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.id = 'add-item-modal';
+        overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+        overlay.innerHTML = '<div class="modal-sheet" onclick="event.stopPropagation()">' +
+            '<h2>Share Code</h2>' +
+            '<p>Copy this code and send it to friends:</p>' +
+            '<textarea class="text-input" style="height:120px;font-size:0.7rem;" readonly>' + code + '</textarea>' +
+            '<button class="secondary-btn" onclick="closeModal()">Close</button>' +
+            '</div>';
+        document.body.appendChild(overlay);
+    }
+}
+
+function openImportModal() {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'add-item-modal';
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+    overlay.innerHTML = '<div class="modal-sheet" onclick="event.stopPropagation()">' +
+        '<h2>📥 Import Outfit</h2>' +
+        '<p style="opacity:0.7;">Paste a share code from a friend to see their outfit ideas.</p>' +
+        '<textarea class="text-input" id="import-code" style="height:100px;" placeholder="Paste share code here..."></textarea>' +
+        '<button class="primary-btn" onclick="importOutfitCode()">Import</button>' +
+        '<button class="secondary-btn" onclick="closeModal()">Cancel</button>' +
+        '</div>';
+    document.body.appendChild(overlay);
+}
+
+async function importOutfitCode() {
+    const codeEl = document.getElementById('import-code');
+    if (!codeEl || !codeEl.value.trim()) return;
+
+    try {
+        const json = decodeURIComponent(escape(atob(codeEl.value.trim())));
+        const data = JSON.parse(json);
+
+        if (!Array.isArray(data)) throw new Error('Invalid format');
+
+        let count = 0;
+        for (const outfit of data) {
+            await dbAddOutfit({
+                id: crypto.randomUUID(),
+                name: (outfit.name || 'Imported Look') + ' (imported)',
+                itemIds: [],
+                reasoning: outfit.reasoning || '',
+                occasion: outfit.occasion || '',
+                mood: outfit.mood || '',
+                dressCode: '',
+                source: 'imported',
+                critique: null,
+                liked: false,
+                wornDates: [],
+                savedAt: new Date().toISOString(),
+                importedItems: outfit.items || [],
+            });
+            count++;
+        }
+
+        closeModal();
+        alert(count + ' outfit(s) imported! Check your Saved Outfits.');
+        renderCommunity();
+    } catch (err) {
+        alert('Invalid share code. Make sure you copied the whole thing.');
+    }
+}
+
+async function openFeedDetail(outfitId) {
+    const outfit = await dbGetOutfit(outfitId);
+    if (!outfit) return;
+    const items = await dbGetAllItems();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'add-item-modal';
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+
+    const outfitItems = (outfit.itemIds || []).map(id => items.find(i => i.id === id)).filter(Boolean);
+
+    let modalHtml = '<div class="modal-sheet" onclick="event.stopPropagation()">' +
+        '<h2>' + (outfit.name || 'Outfit') + '</h2>';
+
+    if (outfitItems.length > 0) {
+        modalHtml += '<div class="outfit-card-items">';
+        outfitItems.forEach(item => {
+            modalHtml += '<img src="' + blobToObjectURL(item.imageBlob) + '" alt="' + (item.name || item.category) + '">';
+        });
+        modalHtml += '</div>';
+    }
+
+    // Show imported item descriptions if no actual items
+    if (outfitItems.length === 0 && outfit.importedItems) {
+        modalHtml += '<div style="margin:0.5rem 0;">';
+        outfit.importedItems.forEach(item => {
+            const catEmoji = CATEGORIES.find(c => c.id === item.category)?.emoji || '👕';
+            modalHtml += '<div class="scan-item-row" style="cursor:default;">' +
+                '<div class="scan-item-info">' +
+                    '<span class="scan-item-emoji">' + catEmoji + '</span>' +
+                    '<div><div class="scan-item-name">' + (item.name || 'Item') + '</div>' +
+                    '<div class="scan-item-cat">' + (item.brand ? item.brand + ' · ' : '') + item.category + '</div></div>' +
+                '</div></div>';
+        });
+        modalHtml += '</div>';
+    }
+
+    if (outfit.reasoning) modalHtml += '<p style="opacity:0.8;">' + outfit.reasoning + '</p>';
+
+    const meta = [];
+    if (outfit.occasion) meta.push(outfit.occasion);
+    if (outfit.mood) meta.push(outfit.mood);
+    if (outfit.source) meta.push(outfit.source);
+    if (meta.length > 0) modalHtml += '<div class="outfit-meta">' + meta.join(' · ') + '</div>';
+
+    modalHtml += '<button class="secondary-btn" onclick="closeModal()">Close</button></div>';
+
+    overlay.innerHTML = modalHtml;
+    document.body.appendChild(overlay);
+}
+
 // ── Service Worker ────────────────────────────────────────────────
 async function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
@@ -1758,5 +2615,11 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (path.endsWith('calendar.html')) {
         if (!getProfile()) { window.location.href = '/onboarding.html'; return; }
         renderCalendar();
+    } else if (path.endsWith('ootd.html')) {
+        if (!getProfile()) { window.location.href = '/onboarding.html'; return; }
+        renderOOTD();
+    } else if (path.endsWith('community.html')) {
+        if (!getProfile()) { window.location.href = '/onboarding.html'; return; }
+        renderCommunity();
     }
 });
