@@ -13,7 +13,7 @@ export async function onRequestPost(context) {
         return new Response('Invalid JSON body', { status: 400 });
     }
 
-    const { items, occasion, mood, dressCode, profile, weather, styleLearning } = body;
+    const { items, occasion, mood, dressCode, profile, weather, styleLearning, ootdMode, remixMode, pinnedItemIndex, pinnedItemName } = body;
     if (!items || !occasion || !mood) {
         return new Response('Missing required fields: items, occasion, mood', { status: 400 });
     }
@@ -22,7 +22,7 @@ export async function onRequestPost(context) {
 
     content.push({
         type: 'text',
-        text: buildGeneratePrompt(items, occasion, mood, dressCode, profile, weather, styleLearning),
+        text: buildGeneratePrompt(items, occasion, mood, dressCode, profile, weather, styleLearning, { ootdMode, remixMode, pinnedItemIndex, pinnedItemName }),
     });
 
     items.forEach((item) => {
@@ -94,7 +94,7 @@ COLOR THEORY RULES you MUST follow:
 
 Always respond with valid JSON.`;
 
-function buildGeneratePrompt(items, occasion, mood, dressCode, profile, weather, styleLearning) {
+function buildGeneratePrompt(items, occasion, mood, dressCode, profile, weather, styleLearning, modes) {
     const itemList = items.map((item, idx) => {
         let desc = 'Item ' + (idx + 1) + ' (' + item.category + ')';
         if (item.name) desc += ' — ' + item.name;
@@ -147,6 +147,17 @@ function buildGeneratePrompt(items, occasion, mood, dressCode, profile, weather,
         prompt += 'Athletic = performance fabrics, comfort first.\n\n';
     }
 
+    // Handle special modes
+    if (modes && modes.remixMode && modes.pinnedItemIndex) {
+        prompt += '\n\nREMIX MODE: Create exactly 5 different outfit variations, and EVERY outfit MUST include Item ' + modes.pinnedItemIndex;
+        if (modes.pinnedItemName) prompt += ' ("' + modes.pinnedItemName + '")';
+        prompt += ' as a core piece. Show diverse styling — from casual to dressy, different color pairings, different vibes.\n';
+    } else if (modes && modes.ootdMode) {
+        prompt += '\n\nOOTD MODE: Create exactly 1 perfect outfit for today. Consider the weather, time of year, and aim for maximum confidence with minimal effort. This is the ONE best look.\n';
+    }
+
+    const outfitCount = (modes && modes.remixMode) ? 5 : ((modes && modes.ootdMode) ? 1 : 3);
+
     prompt += 'Respond with this exact JSON structure:\n';
     prompt += '{\n';
     prompt += '  "outfits": [\n';
@@ -157,6 +168,7 @@ function buildGeneratePrompt(items, occasion, mood, dressCode, profile, weather,
     prompt += '    }\n';
     prompt += '  ]\n';
     prompt += '}\n';
+    prompt += 'Create exactly ' + outfitCount + ' outfit(s). ';
     prompt += 'Use the item numbers (1-based) from the list above. Be specific about why each piece works together, including color harmony.';
 
     if (styleLearning) {
