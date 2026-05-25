@@ -1,104 +1,102 @@
-# Mirror — Confidence-First AI Wardrobe Assistant
+# Mirror — Confidence‑First AI Wardrobe Assistant
 
-Mirror is a wardrobe planner + outfit intelligence app built as a static-first Progressive Web App (PWA) on Cloudflare Pages, with serverless API routes for AI-powered styling and critique.
+Mirror is a static-first Progressive Web App (PWA) for wardrobe planning, outfit generation, and constructive style critique.
 
-It is designed around inclusive, body-safe feedback and practical outfit generation from the clothes a person already owns.
+It runs on Cloudflare Pages + Pages Functions, stores user wardrobe/state locally in the browser, and uses OpenAI-powered endpoints for intelligent outfit guidance.
 
 ---
 
 ## Table of Contents
-1. [What Mirror Does](#what-mirror-does)
-2. [Core Features](#core-features)
-3. [Architecture](#architecture)
-4. [Tech Stack](#tech-stack)
-5. [Project Structure](#project-structure)
-6. [How Data Flows](#how-data-flows)
-7. [Local Development](#local-development)
-8. [Configuration & Secrets](#configuration--secrets)
-9. [API Endpoints](#api-endpoints)
-10. [PWA Behavior](#pwa-behavior)
-11. [Mobile Packaging (Capacitor)](#mobile-packaging-capacitor)
-12. [Data Model (Client-Side)](#data-model-client-side)
-13. [Operational Notes](#operational-notes)
-14. [Troubleshooting](#troubleshooting)
-15. [Roadmap Ideas](#roadmap-ideas)
+1. [Product Overview](#product-overview)
+2. [Feature Inventory](#feature-inventory)
+3. [System Architecture](#system-architecture)
+4. [Repository Layout](#repository-layout)
+5. [Runtime Requirements](#runtime-requirements)
+6. [Environment Variables & Secrets](#environment-variables--secrets)
+7. [Local Development Workflow](#local-development-workflow)
+8. [Deployment Workflow (Cloudflare Pages)](#deployment-workflow-cloudflare-pages)
+9. [API Reference](#api-reference)
+10. [Frontend Pages & Navigation Map](#frontend-pages--navigation-map)
+11. [Client Data Model (IndexedDB/localStorage)](#client-data-model-indexeddblocalstorage)
+12. [PWA Behavior (Offline/Installability)](#pwa-behavior-offlineinstallability)
+13. [Mobile App Build (Capacitor)](#mobile-app-build-capacitor)
+14. [Security, Privacy, and Responsible AI Notes](#security-privacy-and-responsible-ai-notes)
+15. [Troubleshooting](#troubleshooting)
+16. [Contributor Checklist](#contributor-checklist)
+17. [Roadmap](#roadmap)
 
 ---
 
-## What Mirror Does
-Mirror helps a user:
-- Build and maintain a personal wardrobe catalog.
-- Generate occasion/mood/dress-code-aware outfit suggestions.
-- Get AI critique on a selected outfit with swap suggestions.
-- Save outfits and manage outfit history locally.
-- Use the app offline for non-AI flows via PWA caching.
+## Product Overview
+Mirror helps users:
+- Catalog wardrobe items.
+- Generate complete outfits constrained to owned items.
+- Receive constructive, confidence-centered outfit critique.
+- Save and revisit looks locally.
+- Use core non-AI workflows offline via PWA caching.
 
-The product voice prioritizes confidence, specificity, inclusivity, and non-judgment.
-
----
-
-## Core Features
-
-### 1) Wardrobe Management
-- Category-based wardrobe items (tops, bottoms, shoes, outerwear, accessories, bags, jewelry, hats).
-- Image upload + client-side compression before storage/use.
-- Persistent local item storage via IndexedDB.
-
-### 2) Outfit Generation
-- `/api/generate-outfit` takes wardrobe items + context (occasion, mood, optional dress code/profile/weather/style memory).
-- Uses OpenAI Chat Completions (`gpt-4o`) with a JSON response contract.
-- Returns exactly 3 complete outfit candidates using only provided items.
-
-### 3) Outfit Critique
-- `/api/critique-outfit` accepts a user-selected outfit and optional alternative pieces.
-- AI returns strengths, weaknesses, and actionable replacement suggestions.
-
-### 4) PWA + Offline
-- Installable web app with manifest/service worker.
-- Core interface and local data remain usable without internet.
-- AI routes require connectivity + valid API key.
-
-### 5) Multi-Surface Delivery
-- Web-first deployment on Cloudflare Pages.
-- Same web code wrapped with Capacitor for Android/iOS distribution.
+Design intent:
+- Inclusive and non-shaming tone.
+- Actionable recommendations over vague advice.
+- Fast local UX, optional AI enhancement.
 
 ---
 
-## Architecture
+## Feature Inventory
+
+### Wardrobe Management
+- Category-driven item organization (tops, bottoms, shoes, outerwear, accessories, etc.).
+- Client-side image handling/compression before persistence and API use.
+- Local-first storage for wardrobe and saved outfits.
+
+### Outfit Generation
+- Endpoint: `POST /api/generate-outfit`.
+- Input: owned items + context (occasion, mood, dress code, profile, weather, style memory).
+- Output contract: exactly 3 complete outfit options in strict JSON format.
+
+### Outfit Critique
+- Endpoint: `POST /api/critique-outfit`.
+- Input: selected outfit + optional alternate pieces.
+- Output: strengths, weak points, and practical swap recommendations.
+
+### Additional AI Utilities (present in repo)
+- `POST /api/style-report`
+- `POST /api/smart-pack`
+- `POST /api/detect-items`
+
+### PWA / Installability
+- Web App Manifest + Service Worker enabled.
+- Installable on supported mobile/desktop browsers.
+- Offline access for static pages and locally stored data.
+
+### Multi-Surface Delivery
+- Primary surface: web deployment on Cloudflare Pages.
+- Mobile packaging: Capacitor wrapper for Android/iOS.
+
+---
+
+## System Architecture
 
 ### Frontend
-- Static HTML pages under `public/`.
-- Shared application logic in `public/js/app.js`.
-- Styling in `public/css/mirror.css`.
+- Multi-page static app under `public/`.
+- Shared behavior in `public/js/app.js`.
+- Shared visual system in `public/css/mirror.css`.
 
 ### Backend (Serverless)
 - Cloudflare Pages Functions in `functions/api/`.
-- Two POST endpoints:
-  - `generate-outfit`
-  - `critique-outfit`
+- Routes are JavaScript modules exporting `onRequestPost` handlers.
 
 ### Persistence
-- Client-side IndexedDB for wardrobe/outfit data.
-- Local profile storage via `localStorage`.
+- IndexedDB: structured local records (wardrobe, outfits, preferences).
+- localStorage: lightweight settings/profile flags.
 
 ### AI Integration
-- Calls OpenAI REST endpoint: `https://api.openai.com/v1/chat/completions`.
-- Uses strict JSON-shaped prompts and `response_format: { type: "json_object" }`.
+- OpenAI Chat Completions endpoint via HTTPS.
+- Server-side API key usage only (key never shipped to client bundle).
 
 ---
 
-## Tech Stack
-- **Platform/Hosting:** Cloudflare Pages + Functions
-- **Frontend:** Vanilla HTML/CSS/JS
-- **Local Storage:** IndexedDB + localStorage
-- **AI:** OpenAI Chat Completions (`gpt-4o`)
-- **PWA:** Web App Manifest + Service Worker
-- **Mobile Wrapper:** Capacitor 7 (Android + iOS)
-- **Dev Tooling:** Wrangler 4
-
----
-
-## Project Structure
+## Repository Layout
 
 ```text
 /
@@ -111,6 +109,11 @@ The product voice prioritizes confidence, specificity, inclusivity, and non-judg
 │  ├─ board.html
 │  ├─ saved.html
 │  ├─ calendar.html
+│  ├─ community.html
+│  ├─ challenges.html
+│  ├─ ootd.html
+│  ├─ packing.html
+│  ├─ tryon.html
 │  ├─ sw.js
 │  ├─ manifest.json
 │  ├─ css/
@@ -122,7 +125,10 @@ The product voice prioritizes confidence, specificity, inclusivity, and non-judg
 ├─ functions/
 │  └─ api/
 │     ├─ generate-outfit.js
-│     └─ critique-outfit.js
+│     ├─ critique-outfit.js
+│     ├─ style-report.js
+│     ├─ smart-pack.js
+│     └─ detect-items.js
 ├─ capacitor.config.ts
 ├─ package.json
 └─ README.md
@@ -130,256 +136,211 @@ The product voice prioritizes confidence, specificity, inclusivity, and non-judg
 
 ---
 
-## How Data Flows
-
-### Generate Flow
-1. User selects wardrobe items + context.
-2. Frontend posts JSON payload to `/api/generate-outfit`.
-3. Function composes system + user prompt and appends image inputs.
-4. OpenAI returns JSON payload with 3 outfit objects.
-5. Frontend renders outfits; user can save selections locally.
-
-### Critique Flow
-1. User assembles outfit in builder.
-2. Frontend posts selected items (+ optional alternates) to `/api/critique-outfit`.
-3. Function prompts AI for positive feedback, constructive critique, and swaps.
-4. Frontend displays critique response.
+## Runtime Requirements
+- Node.js 18+
+- npm 9+
+- Cloudflare account + Pages project (for hosted runtime)
+- OpenAI API key
+- For native mobile builds:
+  - Android Studio (Android)
+  - Xcode on macOS (iOS)
 
 ---
 
-## Local Development
+## Environment Variables & Secrets
 
-### Prerequisites
-- Node.js 18+ (recommended)
-- npm
-- Cloudflare Wrangler (installed via project dev dependencies)
+### Required
+- `OPENAI_API_KEY`
 
-### Install
+Set in Cloudflare Pages project secrets for production/staging.
+For local Pages Functions development, expose it in your local shell environment before running dev.
+
+### Important Notes
+- Do **not** embed API keys in client-side JavaScript or HTML.
+- Missing key should fail fast with explicit 5xx error from function routes.
+
+---
+
+## Local Development Workflow
+
+### 1) Install dependencies
 ```bash
 npm install
 ```
 
-### Run dev server
+### 2) Start local app + functions
 ```bash
 npm run dev
 ```
 
-This starts local Pages dev from `public/` with Functions support.
+This runs `wrangler pages dev public` and serves:
+- Static pages from `public/`
+- Functions from `functions/`
+
+### 3) Validate main user flows
+- Add wardrobe items.
+- Generate outfits.
+- Critique assembled look.
+- Save/reopen outfits.
 
 ---
 
-## Configuration & Secrets
+## Deployment Workflow (Cloudflare Pages)
 
-### Required secret for AI endpoints
-Set this in Cloudflare Pages project secrets:
-- `OPENAI_API_KEY`
-
-If missing, API routes return an error:
-- `OPENAI_API_KEY not configured. Set it as a Cloudflare Pages secret.`
-
-### Environment expectations
-- AI endpoints require internet egress from Functions runtime.
-- Image payload size should be managed on client (compression is implemented in app logic).
+1. Connect repo to Cloudflare Pages.
+2. Configure build command (static app: no bundling required).
+3. Set output directory to `public`.
+4. Ensure Functions directory is detected (`functions/`).
+5. Add `OPENAI_API_KEY` secret in Pages settings.
+6. Deploy and verify API endpoints + client routes.
 
 ---
 
-## API Endpoints
+## API Reference
 
-## `POST /api/generate-outfit`
+### `POST /api/generate-outfit`
+**Purpose:** Return exactly 3 outfit options using only provided wardrobe items.
 
-### Purpose
-Generate exactly 3 full outfit suggestions from provided wardrobe items.
-
-### Request body
+**Request body (example):**
 ```json
 {
-  "items": [
-    {
-      "category": "tops",
-      "name": "Black Ribbed Tee",
-      "notes": "Slim fit",
-      "image": "data:image/jpeg;base64,..."
-    }
-  ],
+  "items": [{ "category": "tops", "name": "Black Tee", "notes": "fitted", "image": "data:image/jpeg;base64,..." }],
   "occasion": "Date Night",
   "mood": "Confident",
   "dressCode": "smart_casual",
-  "profile": {
-    "vibe": "edgy",
-    "expression": "bold",
-    "adventure": "high"
-  },
-  "weather": {
-    "temp": 68,
-    "desc": "Partly cloudy",
-    "season": "Spring"
-  },
-  "styleLearning": "Optional style memory/instructions"
+  "profile": { "vibe": "edgy", "expression": "bold", "adventure": "high" },
+  "weather": { "temp": 68, "desc": "Partly cloudy", "season": "Spring" },
+  "styleLearning": "Prefer monochrome with one accent"
 }
 ```
 
-### Required fields
-- `items`
-- `occasion`
-- `mood`
+**Response shape (high-level):**
+- `outfits`: array of 3 objects.
+- Each outfit includes item selections and styling rationale.
 
-### Response shape
-```json
-{
-  "outfits": [
-    {
-      "name": "Look name",
-      "itemIndices": [1, 3, 5],
-      "reasoning": "Why this works"
-    }
-  ]
-}
-```
+### `POST /api/critique-outfit`
+**Purpose:** Evaluate selected outfit and suggest improvements/swaps.
 
-### Error behaviors
-- `400`: invalid JSON body
-- `400`: missing required fields
-- `500`: missing API key or internal call failure
-- `502`: upstream OpenAI failure or empty model output
+### `POST /api/style-report`
+**Purpose:** Generate broader style synthesis/trends from user wardrobe context.
+
+### `POST /api/smart-pack`
+**Purpose:** Suggest packing lists based on trip and style constraints.
+
+### `POST /api/detect-items`
+**Purpose:** Detect/label clothing information from provided imagery.
+
+> Exact request/response details should be kept in sync with each function implementation.
 
 ---
 
-## `POST /api/critique-outfit`
-
-### Purpose
-Critique a chosen outfit and recommend improvements.
-
-### Request body
-```json
-{
-  "selectedItems": [
-    {
-      "category": "tops",
-      "name": "White Shirt",
-      "notes": "Oversized",
-      "image": "data:image/jpeg;base64,..."
-    }
-  ],
-  "otherItems": [
-    {
-      "category": "outerwear",
-      "name": "Navy Blazer",
-      "image": "data:image/jpeg;base64,..."
-    }
-  ],
-  "profile": {
-    "vibe": "classic",
-    "expression": "clean",
-    "adventure": "medium"
-  }
-}
-```
-
-### Required fields
-- `selectedItems` (minimum length: 2)
-
-### Response shape
-```json
-{
-  "positives": "What works",
-  "negatives": "What needs improvement",
-  "suggestions": "Specific swap suggestions"
-}
-```
-
-### Error behaviors
-- `400`: invalid JSON body
-- `400`: fewer than 2 selected items
-- `500`: missing API key or internal call failure
-- `502`: upstream OpenAI failure or empty model output
+## Frontend Pages & Navigation Map
+- `index.html`: Landing / entry.
+- `onboarding.html`: Initial profile/preferences.
+- `wardrobe.html`: Item management.
+- `generate.html`: Outfit generation workflow.
+- `builder.html`: Manual outfit assembly.
+- `board.html`: Mood/style board surface.
+- `saved.html`: Persisted looks.
+- `calendar.html`: Outfit planning timeline.
+- Additional pages (`community`, `challenges`, `packing`, `tryon`, etc.) support extended UX surfaces.
 
 ---
 
-## PWA Behavior
-- `public/manifest.json` enables installability.
-- `public/sw.js` handles offline caching strategy.
-- Inline SVG icon constants in app logic support resilient UI rendering.
+## Client Data Model (IndexedDB/localStorage)
 
-Offline behavior scope:
-- ✅ Works: local pages, local wardrobe/outfit storage, navigation.
-- ❌ Requires network: AI generation and critique.
+Typical local entities:
+- Wardrobe items (`id`, `category`, `name`, `notes`, `image`, metadata).
+- Saved outfits (selected item IDs + generated rationale).
+- User style preferences/profile snapshot.
+
+Storage principles:
+- Treat local state as source of truth for personal closet data.
+- Keep AI output derivable/reproducible from stored inputs where possible.
 
 ---
 
-## Mobile Packaging (Capacitor)
+## PWA Behavior (Offline/Installability)
+- `manifest.json` defines install metadata/icons.
+- `sw.js` handles static asset caching and offline navigation support.
+- AI endpoints require network connectivity and valid server-side key.
 
-### Sync web assets/native projects
-```bash
-npm run mobile:sync
-```
+Recommended verification:
+- Install prompt appears on supported browsers.
+- Reload works offline for cached routes.
+- Local wardrobe remains available offline.
 
-### Open Android Studio project
-```bash
-npm run mobile:android
-```
+---
 
-### Open Xcode project
-```bash
-npm run mobile:ios
-```
+## Mobile App Build (Capacitor)
+
+### Current Setup
+- Capacitor dependencies are present in `package.json`.
+- Capacitor config is in `capacitor.config.ts`.
+- Script helpers:
+  - `npm run mobile:sync`
+  - `npm run mobile:android`
+  - `npm run mobile:ios`
+
+### Build Steps
+1. Ensure toolchains are installed (Android Studio / Xcode).
+2. Ensure TypeScript is available for `.ts` Capacitor config parsing.
+3. Run:
+   ```bash
+   npm run mobile:sync
+   npx cap add android
+   npx cap add ios
+   ```
+4. Open native projects:
+   ```bash
+   npm run mobile:android
+   npm run mobile:ios
+   ```
 
 ### Notes
-- Ensure `public/icons/` contains required icon assets before native distribution.
-- Capacitor packages are pinned in dependencies/devDependencies (major v7).
+- Native platform directories (`android/`, `ios/`) are generated and should usually be committed when collaborating on native code.
+- Any web updates should be followed by `npm run mobile:sync`.
 
 ---
 
-## Data Model (Client-Side)
-
-### IndexedDB
-Database name: `mirror-wardrobe`
-
-Object stores:
-1. `items` (keyPath: `id`)
-   - index: `category`
-2. `outfits` (keyPath: `id`)
-   - index: `savedAt`
-
-### localStorage
-- Key: `mirror-profile`
-- Stores user profile/theme context.
-
----
-
-## Operational Notes
-- AI prompts enforce color-theory-aware reasoning and inclusive language guardrails.
-- API handlers enforce JSON-only responses from model output.
-- Client image utilities include compression and base64 conversion helpers to reduce payload cost and improve responsiveness.
+## Security, Privacy, and Responsible AI Notes
+- Never expose `OPENAI_API_KEY` client-side.
+- Minimize sensitive data sent to model endpoints.
+- Use tone and prompt constraints to avoid body-shaming or harmful language.
+- Validate and sanitize all JSON request bodies before model calls.
 
 ---
 
 ## Troubleshooting
 
 ### `OPENAI_API_KEY not configured`
-Set Pages secret `OPENAI_API_KEY` and redeploy/restart local emulation.
+- Add secret to Cloudflare Pages project (or local shell env for dev).
 
-### `OpenAI API error` (502)
-- Validate key format and project billing/quota.
-- Verify model availability for your account.
-- Inspect function logs for upstream response body.
+### Capacitor sync fails on `.ts` config
+- Install TypeScript as a dev dependency or convert config to supported non-TS format.
 
-### AI response parsing issues
-- Ensure prompts still enforce JSON output.
-- Keep `response_format: { type: "json_object" }` in place.
+### API endpoint 4xx/5xx
+- Check function logs in Wrangler/Cloudflare dashboard.
+- Verify request JSON schema and required fields.
 
-### Mobile sync issues
-- Run `npm install` first.
-- Re-run `npm run mobile:sync` after changing web assets/plugins.
+### Offline behavior inconsistent
+- Clear service worker + cache storage, then reload and re-install.
 
 ---
 
-## Roadmap Ideas
-- Account sync and cross-device cloud backup.
-- Calendar/event-aware planning automation.
-- “Worn recently” fatigue detection with smarter rotation.
-- Per-item seasonality and climate scoring.
-- More explicit accessibility settings and contrast-aware styling support.
+## Contributor Checklist
+- [ ] Keep prompts/output contracts backward compatible where possible.
+- [ ] Update README API docs when endpoint behavior changes.
+- [ ] Validate mobile sync after frontend structure changes.
+- [ ] Test at least one offline scenario before release.
+- [ ] Confirm inclusive language in UX and AI responses.
 
 ---
 
-Built for confident self-expression, practical styling outcomes, and zero body-shaming.
+## Roadmap
+- Shared cloud sync for wardrobe across devices.
+- Auth + user profiles.
+- Stronger image understanding + auto-tagging.
+- Outfit confidence scoring with explainability.
+- Analytics on wear frequency and underused items.
+- Optional calendar integrations.
