@@ -1,8 +1,14 @@
-const CACHE_NAME = 'mirror-v1';
+const CACHE_NAME = 'mirror-v4';
 const CORE_ASSETS = [
   '/',
   '/index.html',
   '/onboarding.html',
+  '/board.html',
+  '/wardrobe.html',
+  '/generate.html',
+  '/builder.html',
+  '/saved.html',
+  '/calendar.html',
   '/css/mirror.css',
   '/js/app.js',
   '/manifest.json'
@@ -24,6 +30,11 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+
+  // Don't cache API calls
+  if (url.pathname.startsWith('/api/')) return;
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
