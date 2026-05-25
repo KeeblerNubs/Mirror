@@ -1,13 +1,14 @@
 /* ================================================================
    Mirror — app.js
-   Core application logic: profile, wardrobe (IndexedDB), outfit
-   generation, outfit builder + AI critique, navigation, routing.
+   Core application logic: theme system, profile, wardrobe (IndexedDB),
+   outfit generation with weather/dress code, outfit builder + AI
+   critique, availability tracking, navigation, routing.
    ================================================================ */
 
 // ── Constants ──────────────────────────────────────────────────────
 const STORAGE_KEY = 'mirror-profile';
 const DB_NAME = 'mirror-wardrobe';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const ITEMS_STORE = 'items';
 
 const CATEGORIES = [
@@ -33,6 +34,37 @@ const MOODS = [
     'Elegant', 'Chill', 'Powerful', 'Creative',
 ];
 
+const DRESS_CODES = [
+    { id: 'casual', label: 'Casual', desc: 'Anything goes' },
+    { id: 'smart_casual', label: 'Smart Casual', desc: 'Polished but relaxed' },
+    { id: 'business_casual', label: 'Business Casual', desc: 'Office-appropriate' },
+    { id: 'formal', label: 'Formal', desc: 'Suits, gowns, dress shoes' },
+    { id: 'creative', label: 'Creative', desc: 'Express yourself freely' },
+    { id: 'streetwear', label: 'Streetwear', desc: 'Urban, hype, sneakers' },
+    { id: 'athletic', label: 'Athletic', desc: 'Performance & comfort' },
+];
+
+const WEATHER_CODES = {
+    0: { desc: 'Clear sky', icon: '☀️' },
+    1: { desc: 'Mostly clear', icon: '🌤️' },
+    2: { desc: 'Partly cloudy', icon: '⛅' },
+    3: { desc: 'Overcast', icon: '☁️' },
+    45: { desc: 'Foggy', icon: '🌫️' },
+    48: { desc: 'Icy fog', icon: '🌫️' },
+    51: { desc: 'Light drizzle', icon: '🌦️' },
+    53: { desc: 'Drizzle', icon: '🌧️' },
+    55: { desc: 'Heavy drizzle', icon: '🌧️' },
+    61: { desc: 'Light rain', icon: '🌦️' },
+    63: { desc: 'Rain', icon: '🌧️' },
+    65: { desc: 'Heavy rain', icon: '🌧️' },
+    71: { desc: 'Light snow', icon: '🌨️' },
+    73: { desc: 'Snow', icon: '❄️' },
+    75: { desc: 'Heavy snow', icon: '❄️' },
+    80: { desc: 'Rain showers', icon: '🌦️' },
+    81: { desc: 'Heavy showers', icon: '🌧️' },
+    95: { desc: 'Thunderstorm', icon: '⛈️' },
+};
+
 // ── SVG Icons (inline for offline PWA) ────────────────────────────
 const ICONS = {
     wardrobe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><rect x="14" y="15" width="7" height="6" rx="1"/></svg>',
@@ -43,6 +75,17 @@ const ICONS = {
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
     sparkle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/></svg>',
 };
+
+// ── Theme System ──────────────────────────────────────────────────
+function applyTheme(vibe) {
+    const theme = vibe || 'dark';
+    document.body.setAttribute('data-theme', theme);
+}
+
+function getThemeFromProfile() {
+    const profile = getProfile();
+    return profile ? profile.vibe : null;
+}
 
 // ── Profile Storage ───────────────────────────────────────────────
 function getProfile() {
@@ -112,6 +155,10 @@ async function dbGetItem(id) {
     });
 }
 
+async function dbUpdateItem(item) {
+    return dbAddItem(item);
+}
+
 // ── Image Utilities ───────────────────────────────────────────────
 function compressImage(file, maxDim, quality) {
     return new Promise((resolve) => {
@@ -149,6 +196,68 @@ function blobToObjectURL(blob) {
     return URL.createObjectURL(blob);
 }
 
+// ── Weather ───────────────────────────────────────────────────────
+let cachedWeather = null;
+
+function getSeason(lat) {
+    const month = new Date().getMonth();
+    const isNorthern = lat >= 0;
+    if (month >= 2 && month <= 4) return isNorthern ? 'Spring' : 'Fall';
+    if (month >= 5 && month <= 7) return isNorthern ? 'Summer' : 'Winter';
+    if (month >= 8 && month <= 10) return isNorthern ? 'Fall' : 'Spring';
+    return isNorthern ? 'Winter' : 'Summer';
+}
+
+async function fetchWeather() {
+    if (cachedWeather) return cachedWeather;
+
+    try {
+        const pos = await new Promise((resolve, reject) => {
+            if (!navigator.geolocation) { reject(new Error('No geolocation')); return; }
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 });
+        });
+
+        const { latitude, longitude } = pos.coords;
+        const res = await fetch(
+            'https://api.open-meteo.com/v1/forecast?latitude=' + latitude +
+            '&longitude=' + longitude +
+            '&current=temperature_2m,weather_code&temperature_unit=fahrenheit'
+        );
+
+        if (!res.ok) throw new Error('Weather API error');
+        const data = await res.json();
+
+        const code = data.current?.weather_code ?? 0;
+        const info = WEATHER_CODES[code] || WEATHER_CODES[0];
+
+        cachedWeather = {
+            temp: Math.round(data.current?.temperature_2m || 70),
+            code: code,
+            desc: info.desc,
+            icon: info.icon,
+            season: getSeason(latitude),
+            latitude: latitude,
+            longitude: longitude,
+        };
+
+        return cachedWeather;
+    } catch (err) {
+        console.warn('Weather unavailable:', err.message);
+        return null;
+    }
+}
+
+function renderWeatherWidget(weather) {
+    if (!weather) return '';
+    return '<div class="weather-widget">' +
+        '<span class="weather-icon">' + weather.icon + '</span>' +
+        '<div class="weather-info">' +
+            '<span class="weather-temp">' + weather.temp + '°F · ' + weather.season + '</span>' +
+            '<span class="weather-desc">' + weather.desc + '</span>' +
+        '</div>' +
+    '</div>';
+}
+
 // ── Navigation ────────────────────────────────────────────────────
 function renderNav(activePage) {
     const existing = document.querySelector('.bottom-nav');
@@ -170,39 +279,39 @@ function renderNav(activePage) {
     document.body.appendChild(nav);
 }
 
-// ── Onboarding ────────────────────────────────────────────────────
+// ── Onboarding (Image-Based Quiz) ─────────────────────────────────
 const onboardingSteps = [
     {
         title: "What's your vibe?",
-        subtitle: 'Pick the energy you bring today.',
-        type: 'single', key: 'vibe',
+        subtitle: 'Tap the one that speaks to you.',
+        type: 'image', key: 'vibe',
         options: [
-            { label: 'Minimal + Clean', value: 'minimal', emoji: '🤍' },
-            { label: 'Bold + Loud', value: 'bold', emoji: '🔥' },
-            { label: 'Comfy + Casual', value: 'comfy', emoji: '🛋️' },
-            { label: 'Dark + Mysterious', value: 'dark', emoji: '🖤' },
+            { label: 'Minimal + Clean', sub: 'White space, editorial, refined', value: 'minimal', emoji: '🤍', attr: 'data-vibe="minimal"' },
+            { label: 'Bold + Loud', sub: 'High contrast, vivid, statement', value: 'bold', emoji: '🔥', attr: 'data-vibe="bold"' },
+            { label: 'Comfy + Casual', sub: 'Warm, earthy, effortless', value: 'comfy', emoji: '🛋️', attr: 'data-vibe="comfy"' },
+            { label: 'Dark + Mysterious', sub: 'Neon glow, moody, cyberpunk', value: 'dark', emoji: '🖤', attr: 'data-vibe="dark"' },
         ],
     },
     {
         title: "What's your gender expression?",
         subtitle: 'Your look, your rules.',
-        type: 'single', key: 'expression',
+        type: 'image', key: 'expression',
         options: [
-            { label: 'Masculine', value: 'masc', emoji: '👔' },
-            { label: 'Feminine', value: 'femme', emoji: '👗' },
-            { label: 'Androgynous', value: 'andro', emoji: '✨' },
-            { label: 'Fluid / No Labels', value: 'fluid', emoji: '🌈' },
+            { label: 'Masculine', sub: 'Structured, sharp, tailored', value: 'masc', emoji: '👔', attr: 'data-expr="masc"' },
+            { label: 'Feminine', sub: 'Soft, flowing, expressive', value: 'femme', emoji: '👗', attr: 'data-expr="femme"' },
+            { label: 'Androgynous', sub: 'Blurred lines, balanced', value: 'andro', emoji: '✨', attr: 'data-expr="andro"' },
+            { label: 'Fluid / No Labels', sub: 'All of it, none of it, whatever', value: 'fluid', emoji: '🌈', attr: 'data-expr="fluid"' },
         ],
     },
     {
         title: 'How adventurous is your style?',
         subtitle: 'Rate your fashion risk tolerance.',
-        type: 'single', key: 'adventure',
+        type: 'image', key: 'adventure',
         options: [
-            { label: 'Safe & Classic', value: 'safe', emoji: '🤵' },
-            { label: 'A Little Playful', value: 'playful', emoji: '🎨' },
-            { label: 'Bold Statement', value: 'bold_stmt', emoji: '💥' },
-            { label: 'Full Chaos Mode', value: 'chaos', emoji: '🌀' },
+            { label: 'Safe & Classic', sub: 'Timeless, dependable', value: 'safe', emoji: '🤵', attr: 'data-adv="safe"' },
+            { label: 'A Little Playful', sub: 'Colorful, fun touches', value: 'playful', emoji: '🎨', attr: 'data-adv="playful"' },
+            { label: 'Bold Statement', sub: 'Head-turning pieces', value: 'bold_stmt', emoji: '💥', attr: 'data-adv="bold_stmt"' },
+            { label: 'Full Chaos Mode', sub: 'Rules? What rules?', value: 'chaos', emoji: '🌀', attr: 'data-adv="chaos"' },
         ],
     },
     {
@@ -226,7 +335,18 @@ function renderOnboardingStep() {
 
     let h = '<h2>' + s.title + '</h2><p class="subtitle">' + s.subtitle + '</p>';
 
-    if (s.type === 'single') {
+    if (s.type === 'image') {
+        h += '<div class="quiz-image-grid">';
+        s.options.forEach(o => {
+            const sel = onboardingData[s.key] === o.value;
+            h += '<div class="quiz-image-card' + (sel ? ' selected' : '') + '" ' +
+                o.attr + ' onclick="selectOption(\'' + s.key + '\',\'' + o.value + '\')">' +
+                '<span class="quiz-card-label">' + o.emoji + ' ' + o.label + '</span>' +
+                '<span class="quiz-card-sub">' + o.sub + '</span>' +
+                '</div>';
+        });
+        h += '</div>';
+    } else if (s.type === 'single') {
         h += '<div class="quiz-options">';
         s.options.forEach(o => {
             const sel = onboardingData[s.key] === o.value;
@@ -252,6 +372,12 @@ function renderOnboardingStep() {
     h += '</div>';
 
     c.innerHTML = h;
+
+    // Live-preview the theme when the user picks a vibe
+    if (s.key === 'vibe' && onboardingData.vibe) {
+        applyTheme(onboardingData.vibe);
+    }
+
     if (s.type === 'text') setTimeout(() => { const i = document.getElementById('text-input'); if (i) i.focus(); }, 100);
 }
 
@@ -260,7 +386,7 @@ function updateText(k, v) { onboardingData[k] = v; }
 
 function nextStep() {
     const s = onboardingSteps[currentStep];
-    if ((s.type === 'single' && !onboardingData[s.key]) ||
+    if (((s.type === 'single' || s.type === 'image') && !onboardingData[s.key]) ||
         (s.type === 'text' && (!onboardingData[s.key] || !onboardingData[s.key].trim()))) {
         const btn = document.getElementById('next-btn');
         if (btn) {
@@ -278,7 +404,7 @@ function prevStep() { if (currentStep > 0) { currentStep--; renderOnboardingStep
 function finishOnboarding() {
     for (let i = 0; i < onboardingSteps.length; i++) {
         const s = onboardingSteps[i];
-        if ((s.type === 'single' && !onboardingData[s.key]) ||
+        if (((s.type === 'single' || s.type === 'image') && !onboardingData[s.key]) ||
             (s.type === 'text' && (!onboardingData[s.key] || !onboardingData[s.key].trim()))) {
             currentStep = i;
             renderOnboardingStep();
@@ -287,6 +413,7 @@ function finishOnboarding() {
     }
     onboardingData.completedAt = new Date().toISOString();
     saveProfile(onboardingData);
+    applyTheme(onboardingData.vibe);
     window.location.href = '/wardrobe.html';
 }
 
@@ -307,10 +434,7 @@ async function renderBoard() {
     CATEGORIES.forEach(cat => counts[cat.id] = 0);
     items.forEach(item => { if (counts[item.category] !== undefined) counts[item.category]++; });
     const totalItems = items.length;
-
-    const emojiMap = { minimal: '🤍', bold: '🔥', comfy: '🛋️', dark: '🖤' };
-    const exprMap = { masc: '👔', femme: '👗', andro: '✨', fluid: '🌈' };
-    const advMap = { safe: '🤵', playful: '🎨', bold_stmt: '💥', chaos: '🌀' };
+    const availableItems = items.filter(i => i.available !== false).length;
 
     const findLabel = (key, val) => {
         const step = onboardingSteps.find(s => s.key === key);
@@ -326,18 +450,19 @@ async function renderBoard() {
         '</div>' +
 
         '<div class="profile-card">' +
-            '<div class="profile-row"><span>Vibe</span><span>' + (emojiMap[p.vibe] || '✨') + ' ' + findLabel('vibe', p.vibe) + '</span></div>' +
-            '<div class="profile-row"><span>Expression</span><span>' + (exprMap[p.expression] || '✨') + ' ' + findLabel('expression', p.expression) + '</span></div>' +
-            '<div class="profile-row"><span>Adventure</span><span>' + (advMap[p.adventure] || '✨') + ' ' + findLabel('adventure', p.adventure) + '</span></div>' +
+            '<div class="profile-row"><span>Vibe</span><span>' + findLabel('vibe', p.vibe) + '</span></div>' +
+            '<div class="profile-row"><span>Expression</span><span>' + findLabel('expression', p.expression) + '</span></div>' +
+            '<div class="profile-row"><span>Adventure</span><span>' + findLabel('adventure', p.adventure) + '</span></div>' +
+            '<div class="profile-row"><span>Theme</span><span>' + (p.vibe || 'dark') + '</span></div>' +
         '</div>' +
 
         '<div class="card">' +
             '<h3 style="margin:0 0 0.75rem;">Your Wardrobe</h3>' +
             '<div class="wardrobe-stats">' +
                 '<div class="stat-card"><div class="stat-num">' + totalItems + '</div><div class="stat-label">Total</div></div>' +
+                '<div class="stat-card"><div class="stat-num">' + availableItems + '</div><div class="stat-label">Ready</div></div>' +
                 '<div class="stat-card"><div class="stat-num">' + (counts.tops || 0) + '</div><div class="stat-label">Tops</div></div>' +
                 '<div class="stat-card"><div class="stat-num">' + (counts.bottoms || 0) + '</div><div class="stat-label">Bottoms</div></div>' +
-                '<div class="stat-card"><div class="stat-num">' + (counts.shoes || 0) + '</div><div class="stat-label">Shoes</div></div>' +
             '</div>' +
             (totalItems === 0
                 ? '<p style="text-align:center;opacity:0.6;margin:1rem 0 0;">Start by adding items to your wardrobe.</p>'
@@ -371,11 +496,13 @@ async function renderWardrobe() {
 
     const items = await dbGetAllItems();
     const filtered = wardrobeFilter === 'all' ? items : items.filter(i => i.category === wardrobeFilter);
+    const available = items.filter(i => i.available !== false).length;
 
     let html =
         '<div class="page-header">' +
             '<h1>Your Wardrobe</h1>' +
-            '<p>' + items.length + ' item' + (items.length !== 1 ? 's' : '') + ' in your closet</p>' +
+            '<p>' + items.length + ' item' + (items.length !== 1 ? 's' : '') +
+            ' · ' + available + ' ready to wear</p>' +
         '</div>';
 
     // category tabs
@@ -395,7 +522,9 @@ async function renderWardrobe() {
     html += '<button class="add-item-card" onclick="openAddItemModal()">' + ICONS.plus + '<span>Add Item</span></button>';
     filtered.forEach(item => {
         const url = blobToObjectURL(item.imageBlob);
-        html += '<div class="wardrobe-item" onclick="openItemDetail(\'' + item.id + '\')">' +
+        const isUnavailable = item.available === false;
+        html += '<div class="wardrobe-item' + (isUnavailable ? ' unavailable' : '') +
+            '" onclick="openItemDetail(\'' + item.id + '\')">' +
             '<img src="' + url + '" alt="' + (item.name || item.category) + '" loading="lazy">' +
             '<div class="item-label">' + (item.name || CATEGORIES.find(c => c.id === item.category)?.label || item.category) + '</div>' +
             '<button class="item-delete" onclick="event.stopPropagation();deleteWardrobeItem(\'' + item.id + '\')" title="Delete">×</button>' +
@@ -513,6 +642,7 @@ async function saveNewItem() {
         notes: document.getElementById('item-notes')?.value.trim() || '',
         imageBlob: imageBlob,
         thumbnailBlob: thumbnailBlob,
+        available: true,
         addedAt: new Date().toISOString(),
     };
 
@@ -535,6 +665,7 @@ async function openItemDetail(id) {
 
     const url = blobToObjectURL(item.imageBlob);
     const catLabel = CATEGORIES.find(c => c.id === item.category)?.label || item.category;
+    const isAvailable = item.available !== false;
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -549,16 +680,32 @@ async function openItemDetail(id) {
                 '<div class="meta-row"><span class="meta-label">Category</span><span class="meta-value">' + catLabel + '</span></div>' +
                 (item.notes ? '<div class="meta-row"><span class="meta-label">Notes</span><span class="meta-value">' + item.notes + '</span></div>' : '') +
                 '<div class="meta-row"><span class="meta-label">Added</span><span class="meta-value">' + new Date(item.addedAt).toLocaleDateString() + '</span></div>' +
+                '<div class="toggle-row">' +
+                    '<span class="meta-label">Available to wear</span>' +
+                    '<button class="toggle' + (isAvailable ? ' on' : '') + '" id="avail-toggle" onclick="toggleItemAvailability(\'' + item.id + '\')"></button>' +
+                '</div>' +
             '</div>' +
-            '<button class="secondary-btn" style="color:#ff4444;" onclick="deleteWardrobeItem(\'' + item.id + '\');closeModal()">Delete Item</button>' +
+            '<button class="secondary-btn" style="color:var(--negative);" onclick="deleteWardrobeItem(\'' + item.id + '\');closeModal()">Delete Item</button>' +
             '<button class="secondary-btn" onclick="closeModal()">Close</button>' +
         '</div>';
 
     document.body.appendChild(overlay);
 }
 
+async function toggleItemAvailability(id) {
+    const item = await dbGetItem(id);
+    if (!item) return;
+    item.available = item.available === false ? true : false;
+    await dbUpdateItem(item);
+
+    const toggle = document.getElementById('avail-toggle');
+    if (toggle) {
+        toggle.classList.toggle('on', item.available);
+    }
+}
+
 // ── Generate Outfit Page ──────────────────────────────────────────
-let generateState = { occasion: '', mood: '', results: null, loading: false };
+let generateState = { occasion: '', mood: '', dressCode: '', results: null, loading: false, weather: null };
 
 async function renderGenerate() {
     const p = getProfile();
@@ -568,6 +715,18 @@ async function renderGenerate() {
     if (!c) return;
 
     const items = await dbGetAllItems();
+    const availableItems = items.filter(i => i.available !== false);
+
+    // Fetch weather in background
+    if (!generateState.weather) {
+        fetchWeather().then(w => {
+            if (w && !generateState.weather) {
+                generateState.weather = w;
+                const widget = document.getElementById('weather-slot');
+                if (widget) widget.innerHTML = renderWeatherWidget(w);
+            }
+        });
+    }
 
     let html =
         '<div class="page-header">' +
@@ -575,9 +734,12 @@ async function renderGenerate() {
             '<p>Tell us the occasion and mood — we\'ll pick 3 looks from your wardrobe.</p>' +
         '</div>';
 
-    if (items.length < 3) {
-        html += '<div class="notice">You need at least 3 items in your wardrobe to generate outfits. ' +
-            '<a href="/wardrobe.html" style="color:var(--pink);font-weight:700;">Add items →</a></div>';
+    // weather widget slot
+    html += '<div id="weather-slot">' + renderWeatherWidget(generateState.weather) + '</div>';
+
+    if (availableItems.length < 3) {
+        html += '<div class="notice">You need at least 3 available items in your wardrobe to generate outfits. ' +
+            '<a href="/wardrobe.html">Add items →</a></div>';
         c.innerHTML = html;
         renderNav('generate');
         return;
@@ -594,6 +756,14 @@ async function renderGenerate() {
         'value="' + (OCCASIONS.includes(generateState.occasion) ? '' : generateState.occasion) + '" ' +
         'oninput="setGenerateField(\'occasion\',this.value)" style="margin-top:0.5rem;">';
     html += '</div>';
+
+    // dress code pills
+    html += '<div class="form-group"><label>Dress code</label><div class="pill-grid">';
+    DRESS_CODES.forEach(dc => {
+        html += '<button class="pill' + (generateState.dressCode === dc.id ? ' active' : '') +
+            '" onclick="setGenerateField(\'dressCode\',\'' + dc.id + '\')" title="' + dc.desc + '">' + dc.label + '</button>';
+    });
+    html += '</div></div>';
 
     // mood pills
     html += '<div class="form-group"><label>How do you want to feel?</label><div class="pill-grid" id="mood-pills">';
@@ -647,10 +817,10 @@ async function generateOutfits() {
     renderGenerate();
 
     try {
-        const items = await dbGetAllItems();
+        const allItems = await dbGetAllItems();
+        const items = allItems.filter(i => i.available !== false);
         const profile = getProfile();
 
-        // prepare items with thumbnail base64
         const itemPayloads = await Promise.all(items.map(async (item, idx) => {
             const base64 = await blobToBase64(item.thumbnailBlob);
             return {
@@ -663,20 +833,31 @@ async function generateOutfits() {
             };
         }));
 
+        const requestBody = {
+            items: itemPayloads,
+            occasion: generateState.occasion,
+            mood: generateState.mood,
+            dressCode: generateState.dressCode || '',
+            profile: {
+                vibe: profile.vibe,
+                expression: profile.expression,
+                adventure: profile.adventure,
+                name: profile.name,
+            },
+        };
+
+        if (generateState.weather) {
+            requestBody.weather = {
+                temp: generateState.weather.temp,
+                desc: generateState.weather.desc,
+                season: generateState.weather.season,
+            };
+        }
+
         const response = await fetch('/api/generate-outfit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                items: itemPayloads,
-                occasion: generateState.occasion,
-                mood: generateState.mood,
-                profile: {
-                    vibe: profile.vibe,
-                    expression: profile.expression,
-                    adventure: profile.adventure,
-                    name: profile.name,
-                },
-            }),
+            body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {
@@ -686,7 +867,6 @@ async function generateOutfits() {
 
         const data = await response.json();
 
-        // map item indices back to actual images
         const outfits = (data.outfits || []).map(outfit => {
             const matchedImages = (outfit.itemIndices || []).map(idx => {
                 const item = items[idx - 1];
@@ -732,7 +912,7 @@ async function renderBuilder() {
 
     if (items.length === 0) {
         html += '<div class="notice">Add items to your wardrobe first. ' +
-            '<a href="/wardrobe.html" style="color:var(--pink);font-weight:700;">Add items →</a></div>';
+            '<a href="/wardrobe.html">Add items →</a></div>';
         c.innerHTML = html;
         renderNav('builder');
         return;
@@ -792,7 +972,9 @@ async function renderBuilder() {
     filtered.forEach(item => {
         const url = blobToObjectURL(item.imageBlob);
         const selected = builderState.selectedIds.has(item.id);
+        const isUnavailable = item.available === false;
         html += '<div class="wardrobe-item selectable' + (selected ? ' selected' : '') +
+            (isUnavailable ? ' unavailable' : '') +
             '" onclick="toggleBuilderItem(\'' + item.id + '\')">' +
             '<img src="' + url + '" alt="' + (item.name || item.category) + '" loading="lazy">' +
             '<div class="item-label">' + (item.name || CATEGORIES.find(c => c.id === item.category)?.label || item.category) + '</div>' +
@@ -849,7 +1031,6 @@ async function critiqueOutfit() {
             };
         }));
 
-        // also send non-selected items as swap candidates
         const otherPayloads = await Promise.all(
             allItems.filter(i => !builderState.selectedIds.has(i.id)).slice(0, 20).map(async (item) => {
                 const base64 = await blobToBase64(item.thumbnailBlob);
@@ -906,6 +1087,9 @@ async function registerServiceWorker() {
 // ── Router ────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     registerServiceWorker();
+
+    // Apply theme from profile immediately
+    applyTheme(getThemeFromProfile());
 
     const path = window.location.pathname;
 

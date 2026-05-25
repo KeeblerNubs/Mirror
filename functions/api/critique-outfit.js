@@ -25,7 +25,6 @@ export async function onRequestPost(context) {
         text: buildCritiquePrompt(selectedItems, otherItems, profile),
     });
 
-    // Attach selected item images
     selectedItems.forEach((item) => {
         if (item.image) {
             content.push({
@@ -35,7 +34,6 @@ export async function onRequestPost(context) {
         }
     });
 
-    // Attach other item images (swap candidates)
     if (otherItems && otherItems.length > 0) {
         otherItems.forEach((item) => {
             if (item.image) {
@@ -59,7 +57,7 @@ export async function onRequestPost(context) {
                 messages: [
                     {
                         role: 'system',
-                        content: 'You are Mirror, a confident, inclusive fashion AI. You critique outfits honestly but kindly. Never body-shame. Give actionable, specific feedback. Always respond with valid JSON.',
+                        content: SYSTEM_PROMPT,
                     },
                     { role: 'user', content: content },
                 ],
@@ -91,6 +89,24 @@ export async function onRequestPost(context) {
     }
 }
 
+const SYSTEM_PROMPT = `You are Mirror, a confident, inclusive fashion AI with expert knowledge of color theory and styling. You critique outfits honestly but kindly. Never body-shame. Give actionable, specific feedback.
+
+COLOR THEORY RULES to apply in your critique:
+- Complementary colors (opposite on color wheel) create vibrant contrast: red+green, blue+orange, purple+yellow
+- Analogous colors (adjacent on wheel) create harmony: blue+teal+green
+- Monochromatic (shades of one hue) always reads as intentional and polished
+- Neutrals (black, white, grey, beige, navy, khaki) are universal — they never clash
+- Warm tones (red, orange, yellow, brown, rust) and cool tones (blue, green, purple, teal) can fight if combined without a neutral anchor
+- Earth tones (olive, rust, tan, cream, forest green) harmonize naturally
+- More than 3 bold colors = visual noise unless the person's vibe is intentionally maximalist
+- Metallics (gold/silver) function as neutrals but mixing gold and silver reads messy in formal settings
+- Denim counts as a neutral — it bridges almost any color
+- Pattern clashes: two patterns of similar scale compete; mix large+small scale for sophistication
+
+When critiquing, specifically mention color relationships (e.g., "the navy and rust create a warm complementary pair").
+
+Always respond with valid JSON.`;
+
 function buildCritiquePrompt(selectedItems, otherItems, profile) {
     const selectedList = selectedItems.map((item, idx) => {
         let desc = 'Selected Item ' + (idx + 1) + ' (' + item.category + ')';
@@ -120,13 +136,13 @@ function buildCritiquePrompt(selectedItems, otherItems, profile) {
         prompt += '\n';
     }
 
-    prompt += 'Critique this outfit. Respond with this exact JSON structure:\n';
+    prompt += 'Critique this outfit with special attention to COLOR HARMONY. Respond with this exact JSON structure:\n';
     prompt += '{\n';
-    prompt += '  "positives": "2-3 sentences about what works well — colors, silhouette, vibe, coordination",\n';
-    prompt += '  "negatives": "1-2 sentences of honest constructive feedback — what clashes or could be improved",\n';
-    prompt += '  "suggestions": "1-2 specific swap suggestions using the alternative items from their wardrobe, explaining why the swap improves the look"\n';
+    prompt += '  "positives": "2-3 sentences about what works well — mention specific color relationships, silhouette harmony, vibe alignment",\n';
+    prompt += '  "negatives": "1-2 sentences of honest constructive feedback — call out any color clashes, proportion issues, or pieces that don\'t serve the look",\n';
+    prompt += '  "suggestions": "1-2 specific swap suggestions using the alternative items from their wardrobe, explaining the color/style improvement each swap brings"\n';
     prompt += '}\n';
-    prompt += 'Be specific about colors, textures, proportions. Reference actual items by their category/name.';
+    prompt += 'Be specific about colors, textures, proportions, and color theory principles. Reference actual items by their category/name.';
 
     return prompt;
 }
