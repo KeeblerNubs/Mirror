@@ -187,12 +187,27 @@ This runs `wrangler pages dev public` and serves:
 
 ## Deployment Workflow (Cloudflare Pages)
 
-1. Connect repo to Cloudflare Pages.
-2. Configure build command (static app: no bundling required).
+### Automatic deploys on every push
+
+This repo includes a GitHub Actions workflow at `.github/workflows/deploy.yml` that runs whenever a commit is pushed to any branch. The workflow checks out the pushed commit, installs dependencies with `npm ci`, runs `npm run build`, and publishes the `public/` directory to Cloudflare Pages with Wrangler.
+
+Configure these GitHub repository secrets before relying on automatic deploys:
+
+- `CLOUDFLARE_API_TOKEN` — Cloudflare API token with Cloudflare Pages edit/deploy permissions.
+- `CLOUDFLARE_ACCOUNT_ID` — Cloudflare account ID for the Pages project.
+- `CLOUDFLARE_PAGES_PROJECT_NAME` — the exact Cloudflare Pages project name.
+
+Because the app is static-first, the build command currently verifies the no-bundle build step and Cloudflare Pages serves `public/` as the output directory. Pages Functions are deployed from `functions/` alongside the static assets.
+
+### Cloudflare Pages project setup
+
+1. Create a Cloudflare Pages project that matches `CLOUDFLARE_PAGES_PROJECT_NAME`. If you also use Cloudflare's native Git integration, disable duplicate automatic builds or skip this GitHub Actions workflow.
+2. Configure build command: `npm run build`.
 3. Set output directory to `public`.
 4. Ensure Functions directory is detected (`functions/`).
 5. Add `OPENAI_API_KEY` secret in Pages settings.
-6. Deploy and verify API endpoints + client routes.
+6. Add the GitHub repository secrets listed above.
+7. Push a commit and verify the GitHub Actions deploy plus the live API endpoints/client routes.
 
 ---
 
