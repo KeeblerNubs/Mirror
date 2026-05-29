@@ -8,7 +8,9 @@
     "build": "echo 'Static app - no build step'",
     "mobile:sync": "npx cap sync",
     "mobile:android": "npx cap open android",
-    "mobile:ios": "npx cap open ios"
+    "mobile:ios": "npx cap open ios",
+    "dev:host": "wrangler pages dev public --ip 0.0.0.0 --port 8788",
+    "static:python": "python scripts/serve_static.py"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
